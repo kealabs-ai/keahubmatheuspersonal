@@ -39,6 +39,11 @@ DB_ROOT_PASSWORD=rootpassword
 JWT_SECRET=your-secret-key-change-in-production
 EOF
 
+                    # Copy database.py to each service directory
+                    for service in services/*/; do
+                        cp services/database.py "$service"
+                    done
+
                     docker-compose build
                     docker-compose up -d --force-recreate
                     docker-compose ps
