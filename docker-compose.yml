@@ -1,6 +1,8 @@
 services:
   users-service:
-    build: ./services/users
+    build:
+      context: ./services
+      dockerfile: users/Dockerfile
     ports:
       - "8001:8000"
     env_file:
@@ -16,7 +18,9 @@ services:
       - matheuspersonal
 
   subscriptions-service:
-    build: ./services/subscriptions
+    build:
+      context: ./services
+      dockerfile: subscriptions/Dockerfile
     ports:
       - "8002:8000"
     env_file:
@@ -32,7 +36,9 @@ services:
       - matheuspersonal
 
   orders-service:
-    build: ./services/orders
+    build:
+      context: ./services
+      dockerfile: orders/Dockerfile
     ports:
       - "8003:8000"
     env_file:
@@ -48,7 +54,9 @@ services:
       - matheuspersonal
 
   payments-service:
-    build: ./services/payments
+    build:
+      context: ./services
+      dockerfile: payments/Dockerfile
     ports:
       - "8004:8000"
     env_file:
@@ -64,7 +72,9 @@ services:
       - matheuspersonal
 
   coupons-service:
-    build: ./services/coupons
+    build:
+      context: ./services
+      dockerfile: coupons/Dockerfile
     ports:
       - "8005:8000"
     env_file:
@@ -80,7 +90,9 @@ services:
       - matheuspersonal
 
   leads-service:
-    build: ./services/leads
+    build:
+      context: ./services
+      dockerfile: leads/Dockerfile
     ports:
       - "8006:8000"
     env_file:
