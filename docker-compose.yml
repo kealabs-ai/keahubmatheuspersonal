@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - matheuspersonal
+
+  users-service:
+    build: ./services/users
+    ports:
+      - "8001:8000"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - matheuspersonal
+
+  subscriptions-service:
+    build: ./services/subscriptions
+    ports:
+      - "8002:8000"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - matheuspersonal
+
+  orders-service:
+    build: ./services/orders
+    ports:
+      - "8003:8000"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - matheuspersonal
+
+  payments-service:
+    build: ./services/payments
+    ports:
+      - "8004:8000"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - matheuspersonal
+
+  coupons-service:
+    build: ./services/coupons
+    ports:
+      - "8005:8000"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - matheuspersonal
+
+  leads-service:
+    build: ./services/leads
+    ports:
+      - "8006:8000"
+    environment:
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - matheuspersonal
+
+volumes:
+  mysql_data:
+
+networks:
+  matheuspersonal:
+    driver: bridge
