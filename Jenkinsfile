@@ -28,6 +28,17 @@ pipeline {
                         git clone -b ${GIT_BRANCH} ${GIT_REPO} .
                     fi
 
+                    # Create .env file with database credentials
+                    cat > .env << EOF
+DB_HOST=srv1078.hstgr.io
+DB_PORT=3306
+DB_NAME=u549746795_mp
+DB_USER=u549746795_matheusmp
+DB_PASSWORD=MP@2026!Passos
+DB_ROOT_PASSWORD=rootpassword
+JWT_SECRET=your-secret-key-change-in-production
+EOF
+
                     docker-compose build
                     docker-compose up -d --force-recreate
                     docker-compose ps
