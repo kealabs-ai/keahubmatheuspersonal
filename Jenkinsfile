@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_PATH = '/var/www/matheuspersonal'
+        DEPLOY_PATH = '/var/jenkins_home/apps/matheuspersonal'
         GIT_REPO    = 'https://github.com/kealabs-ai/keahubmatheuspersonal.git'
         GIT_BRANCH  = 'develop'
     }
