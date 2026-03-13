@@ -1,14 +1,6 @@
 pipeline {
     agent any
     
-    environment {
-        DOCKER_REGISTRY = 'your-registry'
-        APP_NAME = 'matheuspersonal'
-        HOSTINGER_HOST = credentials('hostinger-host')
-        HOSTINGER_USER = credentials('hostinger-user')
-        HOSTINGER_SSH_KEY = credentials('hostinger-ssh-key')
-    }
-    
     stages {
         stage('Checkout') {
             steps {
@@ -24,38 +16,25 @@ pipeline {
             }
         }
         
-        stage('Run Tests') {
-            steps {
-                script {
-                    sh 'docker-compose run --rm users-service pytest || true'
-                    sh 'docker-compose run --rm subscriptions-service pytest || true'
-                    sh 'docker-compose run --rm orders-service pytest || true'
-                    sh 'docker-compose run --rm payments-service pytest || true'
-                    sh 'docker-compose run --rm coupons-service pytest || true'
-                    sh 'docker-compose run --rm leads-service pytest || true'
-                }
-            }
-        }
-        
-        stage('Push Images') {
-            steps {
-                script {
-                    sh 'docker-compose push || true'
-                }
-            }
-        }
-        
-        stage('Deploy to Hostinger') {
+        stage('Deploy Services') {
             steps {
                 script {
                     sh '''
-                        ssh -i ${HOSTINGER_SSH_KEY} ${HOSTINGER_USER}@${HOSTINGER_HOST} << 'EOF'
-                        cd /var/www/matheuspersonal
-                        docker-compose pull
-                        docker-compose up -d --no-deps --build
-                        docker-compose ps
-EOF
+                        docker-compose up -d --no-deps --build users-service
+                        docker-compose up -d --no-deps --build subscriptions-service
+                        docker-compose up -d --no-deps --build orders-service
+                        docker-compose up -d --no-deps --build payments-service
+                        docker-compose up -d --no-deps --build coupons-service
+                        docker-compose up -d --no-deps --build leads-service
                     '''
+                }
+            }
+        }
+        
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    sh 'docker-compose ps'
                 }
             }
         }
@@ -63,10 +42,16 @@ EOF
     
     post {
         success {
-            echo 'Deploy realizado com sucesso!'
+            echo '✅ Deploy realizado com sucesso!'
+            script {
+                sh 'docker-compose ps'
+            }
         }
         failure {
-            echo 'Falha no deploy!'
+            echo '❌ Falha no deploy!'
+            script {
+                sh 'docker-compose logs --tail=50'
+            }
         }
     }
 }

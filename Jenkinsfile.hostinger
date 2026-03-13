@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'HOSTINGER_HOST', defaultValue: 'srv1078.hstgr.io', description: 'Hostinger Host')
+        string(name: 'HOSTINGER_USER', defaultValue: 'root', description: 'SSH User')
+        string(name: 'DEPLOY_PATH', defaultValue: '/var/www/matheuspersonal', description: 'Deploy Path')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Build Images') {
+            steps {
+                script {
+                    sh 'docker-compose build'
+                }
+            }
+        }
+        
+        stage('Deploy to Hostinger') {
+            steps {
+                script {
+                    sshagent(['hostinger-ssh-credentials']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${params.HOSTINGER_USER}@${params.HOSTINGER_HOST} '
+                                cd ${params.DEPLOY_PATH} &&
+                                git pull origin develop &&
+                                docker-compose up -d --no-deps --build users-service &&
+                                docker-compose up -d --no-deps --build subscriptions-service &&
+                                docker-compose up -d --no-deps --build orders-service &&
+                                docker-compose up -d --no-deps --build payments-service &&
+                                docker-compose up -d --no-deps --build coupons-service &&
+                                docker-compose up -d --no-deps --build leads-service &&
+                                docker-compose ps
+                            '
+                        """
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '✅ Deploy realizado com sucesso na Hostinger!'
+        }
+        failure {
+            echo '❌ Falha no deploy!'
+        }
+    }
+}
