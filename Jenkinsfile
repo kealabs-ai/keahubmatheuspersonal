@@ -1,87 +1,54 @@
 pipeline {
     agent any
-    
+
+    environment {
+        DB_HOST     = 'srv1078.hstgr.io'
+        DB_PORT     = '3306'
+        DB_USER     = 'u549746795_matheusmp'
+        DB_PASSWORD = 'MP@2026!Passos'
+        DB_NAME     = 'u549746795_mp'
+        DB_ROOT_PASSWORD = 'rootpassword'
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        
+
         stage('Build Images') {
             steps {
-                script {
-                    sh '''
-                        if command -v docker-compose &> /dev/null; then
-                            docker-compose build
-                        else
-                            docker compose build
-                        fi
-                    '''
-                }
+                sh 'docker compose build'
             }
         }
-        
+
         stage('Deploy Services') {
             steps {
-                script {
-                    sh '''
-                        if command -v docker-compose &> /dev/null; then
-                            COMPOSE_CMD="docker-compose"
-                        else
-                            COMPOSE_CMD="docker compose"
-                        fi
-                        
-                        $COMPOSE_CMD up -d --no-deps --build users-service
-                        $COMPOSE_CMD up -d --no-deps --build subscriptions-service
-                        $COMPOSE_CMD up -d --no-deps --build orders-service
-                        $COMPOSE_CMD up -d --no-deps --build payments-service
-                        $COMPOSE_CMD up -d --no-deps --build coupons-service
-                        $COMPOSE_CMD up -d --no-deps --build leads-service
-                    '''
-                }
+                sh '''
+                    docker compose up -d --no-deps --build users-service
+                    docker compose up -d --no-deps --build subscriptions-service
+                    docker compose up -d --no-deps --build orders-service
+                    docker compose up -d --no-deps --build payments-service
+                    docker compose up -d --no-deps --build coupons-service
+                    docker compose up -d --no-deps --build leads-service
+                '''
             }
         }
-        
+
         stage('Verify Deployment') {
             steps {
-                script {
-                    sh '''
-                        if command -v docker-compose &> /dev/null; then
-                            docker-compose ps
-                        else
-                            docker compose ps
-                        fi
-                    '''
-                }
+                sh 'docker compose ps'
             }
         }
     }
-    
+
     post {
         success {
             echo '✅ Deploy realizado com sucesso!'
-            script {
-                sh '''
-                    if command -v docker-compose &> /dev/null; then
-                        docker-compose ps
-                    else
-                        docker compose ps
-                    fi
-                '''
-            }
         }
         failure {
             echo '❌ Falha no deploy!'
-            script {
-                sh '''
-                    if command -v docker-compose &> /dev/null; then
-                        docker-compose logs --tail=50 || true
-                    else
-                        docker compose logs --tail=50 || true
-                    fi
-                '''
-            }
         }
     }
 }
