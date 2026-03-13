@@ -28,7 +28,7 @@ pipeline {
                         git clone -b ${GIT_BRANCH} ${GIT_REPO} .
                     fi
 
-                    docker compose build --no-cache
+                    docker compose build
                     docker compose up -d --force-recreate
                     docker compose ps
                 """
