@@ -1,6 +1,43 @@
 # Configuração Jenkins - MatheusPersonal
 
-## Opção 1: Deploy Local (Jenkinsfile)
+## ⚠️ PROBLEMA IDENTIFICADO: docker-compose não encontrado
+
+### Solução Rápida:
+
+#### Opção 1: Instalar docker-compose no Jenkins (RECOMENDADO)
+
+```bash
+# Entrar no container Jenkins
+docker exec -it -u root <jenkins-container-id> bash
+
+# Executar o script de instalação
+cd /var/jenkins_home/workspace/hubops-matheus_personal
+chmod +x install-docker-compose.sh
+./install-docker-compose.sh
+```
+
+Ou manualmente:
+
+```bash
+# Entrar no container Jenkins como root
+docker exec -it -u root <jenkins-container-id> bash
+
+# Instalar docker-compose
+curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+# Verificar
+docker-compose --version
+```
+
+#### Opção 2: Usar Docker Compose V2 (já instalado)
+
+O Jenkinsfile já foi atualizado para detectar automaticamente se deve usar:
+- `docker-compose` (V1)
+- `docker compose` (V2 - plugin do Docker)
+
+---
 
 Pipeline simplificado que executa o deploy no próprio servidor Jenkins.
 

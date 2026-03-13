@@ -11,7 +11,13 @@ pipeline {
         stage('Build Images') {
             steps {
                 script {
-                    sh 'docker-compose build'
+                    sh '''
+                        if command -v docker-compose &> /dev/null; then
+                            docker-compose build
+                        else
+                            docker compose build
+                        fi
+                    '''
                 }
             }
         }
@@ -20,12 +26,18 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        docker-compose up -d --no-deps --build users-service
-                        docker-compose up -d --no-deps --build subscriptions-service
-                        docker-compose up -d --no-deps --build orders-service
-                        docker-compose up -d --no-deps --build payments-service
-                        docker-compose up -d --no-deps --build coupons-service
-                        docker-compose up -d --no-deps --build leads-service
+                        if command -v docker-compose &> /dev/null; then
+                            COMPOSE_CMD="docker-compose"
+                        else
+                            COMPOSE_CMD="docker compose"
+                        fi
+                        
+                        $COMPOSE_CMD up -d --no-deps --build users-service
+                        $COMPOSE_CMD up -d --no-deps --build subscriptions-service
+                        $COMPOSE_CMD up -d --no-deps --build orders-service
+                        $COMPOSE_CMD up -d --no-deps --build payments-service
+                        $COMPOSE_CMD up -d --no-deps --build coupons-service
+                        $COMPOSE_CMD up -d --no-deps --build leads-service
                     '''
                 }
             }
@@ -34,7 +46,13 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 script {
-                    sh 'docker-compose ps'
+                    sh '''
+                        if command -v docker-compose &> /dev/null; then
+                            docker-compose ps
+                        else
+                            docker compose ps
+                        fi
+                    '''
                 }
             }
         }
@@ -44,13 +62,25 @@ pipeline {
         success {
             echo '✅ Deploy realizado com sucesso!'
             script {
-                sh 'docker-compose ps'
+                sh '''
+                    if command -v docker-compose &> /dev/null; then
+                        docker-compose ps
+                    else
+                        docker compose ps
+                    fi
+                '''
             }
         }
         failure {
             echo '❌ Falha no deploy!'
             script {
-                sh 'docker-compose logs --tail=50'
+                sh '''
+                    if command -v docker-compose &> /dev/null; then
+                        docker-compose logs --tail=50 || true
+                    else
+                        docker compose logs --tail=50 || true
+                    fi
+                '''
             }
         }
     }
