@@ -49,11 +49,10 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        ssh -i ${HOSTINGER_SSH_KEY} ${HOSTINGER_USER}@${HOSTINGER_HOST} << EOF
+                        ssh -i ${HOSTINGER_SSH_KEY} ${HOSTINGER_USER}@${HOSTINGER_HOST} << 'EOF'
                         cd /var/www/matheuspersonal
                         docker-compose pull
-                        docker-compose down
-                        docker-compose up -d
+                        docker-compose up -d --no-deps --build
                         docker-compose ps
 EOF
                     '''
@@ -63,15 +62,6 @@ EOF
     }
     
     post {
-        always {
-            script {
-                try {
-                    sh 'docker-compose down || true'
-                } catch (Exception e) {
-                    echo "Erro ao executar docker-compose down: ${e.message}"
-                }
-            }
-        }
         success {
             echo 'Deploy realizado com sucesso!'
         }
