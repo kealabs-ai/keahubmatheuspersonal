@@ -1,28 +1,17 @@
 services:
-  mysql:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - matheuspersonal
-
   users-service:
     build: ./services/users
     ports:
       - "8001:8000"
+    env_file:
+      - .env
     environment:
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      - mysql
+    restart: always
     networks:
       - matheuspersonal
 
@@ -30,13 +19,15 @@ services:
     build: ./services/subscriptions
     ports:
       - "8002:8000"
+    env_file:
+      - .env
     environment:
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      - mysql
+    restart: always
     networks:
       - matheuspersonal
 
@@ -44,13 +35,15 @@ services:
     build: ./services/orders
     ports:
       - "8003:8000"
+    env_file:
+      - .env
     environment:
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      - mysql
+    restart: always
     networks:
       - matheuspersonal
 
@@ -58,13 +51,15 @@ services:
     build: ./services/payments
     ports:
       - "8004:8000"
+    env_file:
+      - .env
     environment:
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      - mysql
+    restart: always
     networks:
       - matheuspersonal
 
@@ -72,13 +67,15 @@ services:
     build: ./services/coupons
     ports:
       - "8005:8000"
+    env_file:
+      - .env
     environment:
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      - mysql
+    restart: always
     networks:
       - matheuspersonal
 
@@ -86,18 +83,17 @@ services:
     build: ./services/leads
     ports:
       - "8006:8000"
+    env_file:
+      - .env
     environment:
-      DB_HOST: mysql
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      - mysql
+    restart: always
     networks:
       - matheuspersonal
-
-volumes:
-  mysql_data:
 
 networks:
   matheuspersonal:
