@@ -2,8 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_HOST = 'srv1078.hstgr.io'
-        DEPLOY_USER = 'root'
         DEPLOY_PATH = '/var/www/matheuspersonal'
         GIT_REPO    = 'https://github.com/kealabs-ai/keahubmatheuspersonal.git'
         GIT_BRANCH  = 'develop'
@@ -18,16 +16,20 @@ pipeline {
 
         stage('Deploy via SSH') {
             steps {
-                sshagent(credentials: ['hostinger-ssh-credentials']) {
+                withCredentials([
+                    sshUserPrivateKey(credentialsId: 'hostinger-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'DEPLOY_USER'),
+                    string(credentialsId: 'hostinger-host', variable: 'DEPLOY_HOST'),
+                    string(credentialsId: 'hostinger-db-user', variable: 'DB_USER'),
+                    string(credentialsId: 'hostinger-db-password', variable: 'DB_PASSWORD'),
+                    string(credentialsId: 'hostinger-db-name', variable: 'DB_NAME'),
+                    string(credentialsId: 'hostinger-db-host', variable: 'DB_HOST')
+                ]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} '
+                        ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$DEPLOY_USER@\$DEPLOY_HOST '
                             set -e
-
-                            # Criar diretório se não existir
                             mkdir -p ${DEPLOY_PATH}
                             cd ${DEPLOY_PATH}
 
-                            # Clonar ou atualizar repositório
                             if [ -d ".git" ]; then
                                 git fetch origin
                                 git reset --hard origin/${GIT_BRANCH}
@@ -35,22 +37,18 @@ pipeline {
                                 git clone -b ${GIT_BRANCH} ${GIT_REPO} .
                             fi
 
-                            # Criar .env se não existir
                             if [ ! -f ".env" ]; then
                                 cat > .env << EOF
-DB_HOST=srv1078.hstgr.io
+DB_HOST=\$DB_HOST
 DB_PORT=3306
-DB_USER=u549746795_matheusmp
-DB_PASSWORD=MP@2026!Passos
-DB_NAME=u549746795_mp
+DB_USER=\$DB_USER
+DB_PASSWORD=\$DB_PASSWORD
+DB_NAME=\$DB_NAME
 EOF
                             fi
 
-                            # Build e deploy dos serviços
                             docker-compose build --no-cache
                             docker-compose up -d --no-deps --build
-
-                            # Status final
                             docker-compose ps
                         '
                     """
