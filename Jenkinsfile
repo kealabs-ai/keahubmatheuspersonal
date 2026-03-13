@@ -41,7 +41,7 @@ EOF
 
                     # Copy database.py to each service directory
                     for service in services/*/; do
-                        cp services/database.py "$service"
+                        cp services/database.py "\$service"
                     done
 
                     docker-compose build
