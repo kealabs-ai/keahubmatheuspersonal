@@ -5,6 +5,7 @@ pipeline {
         DEPLOY_PATH = '/var/jenkins_home/apps/matheuspersonal'
         GIT_REPO    = 'https://github.com/kealabs-ai/keahubmatheuspersonal.git'
         GIT_BRANCH  = 'develop'
+        PATH        = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     }
 
     stages {
@@ -46,12 +47,17 @@ EOF
 
                     docker-compose down --volumes --remove-orphans || true
                     docker volume prune -f || true
-                    docker ps -q | xargs -r docker stop || true
-                    docker ps -aq | xargs -r docker rm -f || true
+                    DOCKER=$(which docker || find /usr /usr/local /usr/bin -name docker -type f 2>/dev/null | head -1)
+                    DOCKER_COMPOSE=$(which docker-compose || find /usr /usr/local /usr/bin -name docker-compose -type f 2>/dev/null | head -1)
+                    echo "Docker: $DOCKER"
+                    echo "Docker Compose: $DOCKER_COMPOSE"
 
-                    docker-compose build --no-cache
-                    docker-compose up -d --force-recreate
-                    docker-compose ps
+                    $DOCKER ps -q | xargs -r $DOCKER stop || true
+                    $DOCKER ps -aq | xargs -r $DOCKER rm -f || true
+
+                    $DOCKER_COMPOSE build --no-cache
+                    $DOCKER_COMPOSE up -d --force-recreate
+                    $DOCKER_COMPOSE ps
                 """
             }
         }
