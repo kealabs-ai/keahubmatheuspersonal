@@ -44,9 +44,70 @@ EOF
                         cp services/database.py "\$service"
                     done
 
-                    docker-compose build
-                    docker-compose up -d --force-recreate
-                    docker-compose ps
+                    mkdir -p nginx
+                    if [ ! -f nginx/nginx.conf ]; then
+                        cat > nginx/nginx.conf << 'NGINXEOF'
+events {}
+
+http {
+    server {
+        listen 80;
+        server_name srv1023256.hstgr.cloud;
+        return 301 https://\$host\$request_uri;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name srv1023256.hstgr.cloud;
+
+        ssl_certificate     /etc/nginx/certs/fullchain.pem;
+        ssl_certificate_key /etc/nginx/certs/privkey.pem;
+
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers   HIGH:!aNULL:!MD5;
+
+        add_header Access-Control-Allow-Origin  "*";
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization";
+
+        location /api/users/ {
+            proxy_pass http://users-service:8000/;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+        location /api/subscriptions/ {
+            proxy_pass http://subscriptions-service:8000/;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+        location /api/orders/ {
+            proxy_pass http://orders-service:8000/;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+        location /api/payments/ {
+            proxy_pass http://payments-service:8000/;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+        location /api/coupons/ {
+            proxy_pass http://coupons-service:8000/;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+        location /api/leads/ {
+            proxy_pass http://leads-service:8000/;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+    }
+}
+NGINXEOF
+                    fi
+
+                    docker compose build
+                    docker compose up -d --force-recreate
+                    docker compose ps
                 """
             }
         }
