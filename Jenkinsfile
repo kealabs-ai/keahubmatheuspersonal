@@ -21,8 +21,8 @@ pipeline {
 
                     export PATH=$PATH:/usr/local/bin:/usr/bin:/bin
 
-                    DOCKER=/usr/local/bin/docker
-                    DOCKER_COMPOSE=/usr/local/bin/docker-compose
+                    DOCKER=/var/jenkins_home/docker
+                    DOCKER_COMPOSE=/var/jenkins_home/docker-compose
                     echo "Docker: $DOCKER"
                     echo "Docker Compose: $DOCKER_COMPOSE"
                     ls -la $DOCKER || true
