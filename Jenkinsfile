@@ -46,6 +46,8 @@ EOF
 
                     docker-compose down --volumes --remove-orphans || true
                     docker volume prune -f || true
+                    docker ps -q | xargs -r docker stop || true
+                    docker ps -aq | xargs -r docker rm -f || true
 
                     docker-compose build --no-cache
                     docker-compose up -d --force-recreate
