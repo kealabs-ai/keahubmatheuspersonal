@@ -44,6 +44,9 @@ EOF
                         cp services/database.py "\$service"
                     done
 
+                    docker-compose down --volumes --remove-orphans || true
+                    docker volume prune -f || true
+
                     rm -rf nginx
                     mkdir -p nginx
                     cat > nginx/nginx.conf << 'NGINXEOF'
