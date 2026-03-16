@@ -26,12 +26,12 @@ pipeline {
                     echo "Docker: $DOCKER"
                     echo "Docker Compose: $DOCKER_COMPOSE"
 
-                    if [ ! -f "$DOCKER" ]; then
+                    if [ ! -x "$DOCKER" ]; then
                         echo "ERROR: docker not found at $DOCKER"
                         exit 1
                     fi
 
-                    if [ ! -f "$DOCKER_COMPOSE" ]; then
+                    if [ ! -x "$DOCKER_COMPOSE" ]; then
                         echo "ERROR: docker-compose not found at $DOCKER_COMPOSE"
                         exit 1
                     fi
