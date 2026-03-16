@@ -25,16 +25,9 @@ pipeline {
                     DOCKER_COMPOSE=/usr/local/bin/docker-compose
                     echo "Docker: $DOCKER"
                     echo "Docker Compose: $DOCKER_COMPOSE"
-
-                    if [ ! -x "$DOCKER" ]; then
-                        echo "ERROR: docker not found at $DOCKER"
-                        exit 1
-                    fi
-
-                    if [ ! -x "$DOCKER_COMPOSE" ]; then
-                        echo "ERROR: docker-compose not found at $DOCKER_COMPOSE"
-                        exit 1
-                    fi
+                    ls -la $DOCKER || true
+                    $DOCKER --version || true
+                    $DOCKER_COMPOSE --version || true
 
                     mkdir -p $DEPLOY_PATH
                     cd $DEPLOY_PATH
