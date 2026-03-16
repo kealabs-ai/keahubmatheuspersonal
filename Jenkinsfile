@@ -44,9 +44,9 @@ EOF
                         cp services/database.py "\$service"
                     done
 
+                    rm -rf nginx
                     mkdir -p nginx
-                    if [ ! -f nginx/nginx.conf ]; then
-                        cat > nginx/nginx.conf << 'NGINXEOF'
+                    cat > nginx/nginx.conf << 'NGINXEOF'
 events {}
 
 http {
@@ -103,7 +103,6 @@ http {
     }
 }
 NGINXEOF
-                    fi
 
                     docker-compose build
                     docker-compose up -d --force-recreate
