@@ -53,9 +53,7 @@ ENVEOF
                         cp services/database.py "$service"
                     done
 
-                    $DOCKER_COMPOSE down --volumes --remove-orphans || true
-                    $DOCKER ps -q | xargs -r $DOCKER stop || true
-                    $DOCKER ps -aq | xargs -r $DOCKER rm -f || true
+                    $DOCKER_COMPOSE down --remove-orphans || true
 
                     $DOCKER_COMPOSE build --no-cache
                     $DOCKER_COMPOSE up -d --force-recreate
