@@ -26,6 +26,18 @@ pipeline {
                     echo "Docker: $DOCKER"
                     echo "Docker Compose: $DOCKER_COMPOSE"
 
+                    if [ -z "$DOCKER" ]; then
+                        echo "ERROR: docker not found"
+                        find / -name docker -type f 2>/dev/null
+                        exit 1
+                    fi
+
+                    if [ -z "$DOCKER_COMPOSE" ]; then
+                        echo "ERROR: docker-compose not found"
+                        find / -name docker-compose -type f 2>/dev/null
+                        exit 1
+                    fi
+
                     mkdir -p $DEPLOY_PATH
                     cd $DEPLOY_PATH
 
