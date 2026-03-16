@@ -21,7 +21,7 @@ pipeline {
 
                     export PATH=$PATH:/usr/local/bin:/usr/bin:/bin
 
-                    DOCKER=/usr/bin/docker
+                    DOCKER=/usr/local/bin/docker
                     DOCKER_COMPOSE=/usr/local/bin/docker-compose
                     echo "Docker: $DOCKER"
                     echo "Docker Compose: $DOCKER_COMPOSE"
