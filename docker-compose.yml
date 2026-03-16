@@ -1,10 +1,28 @@
 services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt/live/srv1023256.hstgr.cloud/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/srv1023256.hstgr.cloud/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+    depends_on:
+      - users-service
+      - subscriptions-service
+      - orders-service
+      - payments-service
+      - coupons-service
+      - leads-service
+    restart: always
+    networks:
+      - matheuspersonal
+
   users-service:
     build:
       context: ./services
       dockerfile: users/Dockerfile
-    ports:
-      - "8001:8000"
     env_file:
       - .env
     environment:
@@ -21,8 +39,6 @@ services:
     build:
       context: ./services
       dockerfile: subscriptions/Dockerfile
-    ports:
-      - "8002:8000"
     env_file:
       - .env
     environment:
@@ -39,8 +55,6 @@ services:
     build:
       context: ./services
       dockerfile: orders/Dockerfile
-    ports:
-      - "8003:8000"
     env_file:
       - .env
     environment:
@@ -57,8 +71,6 @@ services:
     build:
       context: ./services
       dockerfile: payments/Dockerfile
-    ports:
-      - "8004:8000"
     env_file:
       - .env
     environment:
@@ -75,8 +87,6 @@ services:
     build:
       context: ./services
       dockerfile: coupons/Dockerfile
-    ports:
-      - "8005:8000"
     env_file:
       - .env
     environment:
@@ -93,8 +103,6 @@ services:
     build:
       context: ./services
       dockerfile: leads/Dockerfile
-    ports:
-      - "8006:8000"
     env_file:
       - .env
     environment:

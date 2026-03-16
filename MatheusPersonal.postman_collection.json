@@ -1,0 +1,266 @@
+{
+  "info": {
+    "name": "MatheusPersonal",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "users_url",         "value": "http://localhost:8001" },
+    { "key": "subscriptions_url", "value": "http://localhost:8002" },
+    { "key": "orders_url",        "value": "http://localhost:8003" },
+    { "key": "payments_url",      "value": "http://localhost:8004" },
+    { "key": "coupons_url",       "value": "http://localhost:8005" },
+    { "key": "leads_url",         "value": "http://localhost:8006" }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "url": "{{users_url}}/users",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"phone\": \"11999999999\",\n  \"cpf\": \"12345678901\",\n  \"birth_date\": \"1990-01-15\",\n  \"cep\": \"01310100\",\n  \"address\": \"Av. Paulista\",\n  \"number\": \"1000\",\n  \"neighborhood\": \"Bela Vista\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\",\n  \"username\": \"joaosilva\",\n  \"password\": \"senha123\",\n  \"country_code\": \"+55\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "url": "{{users_url}}/users/1"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "POST",
+            "url": "{{users_url}}/users/1/update",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva Atualizado\",\n  \"email\": \"joao.novo@email.com\",\n  \"phone\": \"11988888888\",\n  \"cpf\": \"12345678901\",\n  \"birth_date\": \"1990-01-15\",\n  \"cep\": \"01310100\",\n  \"address\": \"Av. Paulista\",\n  \"number\": \"2000\",\n  \"neighborhood\": \"Bela Vista\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\",\n  \"username\": \"joaosilva\",\n  \"password\": \"senha123\",\n  \"country_code\": \"+55\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "POST",
+            "url": "{{users_url}}/users/1/delete"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "url": "{{subscriptions_url}}/subscriptions",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_user\": 1,\n  \"plan_name\": \"Plano Premium\",\n  \"plan_price\": 99.90,\n  \"plan_frequency\": \"monthly\",\n  \"status\": \"active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get User Subscriptions",
+          "request": {
+            "method": "GET",
+            "url": "{{subscriptions_url}}/subscriptions/user/1"
+          }
+        },
+        {
+          "name": "Update Subscription Status",
+          "request": {
+            "method": "POST",
+            "url": "{{subscriptions_url}}/subscriptions/1/update?status=inactive"
+          }
+        },
+        {
+          "name": "Cancel Subscription",
+          "request": {
+            "method": "POST",
+            "url": "{{subscriptions_url}}/subscriptions/1/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "url": "{{orders_url}}/orders",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_user\": 1,\n  \"payment_method\": \"credit_card\",\n  \"id_coupon\": null,\n  \"items\": [\n    {\n      \"plan_name\": \"Plano Premium\",\n      \"plan_price\": 99.90,\n      \"plan_frequency\": \"monthly\",\n      \"quantity\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Order",
+          "request": {
+            "method": "GET",
+            "url": "{{orders_url}}/orders/1"
+          }
+        },
+        {
+          "name": "Get User Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{orders_url}}/orders/user/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "url": "{{payments_url}}/payments",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_order\": 1,\n  \"payment_method\": \"credit_card\",\n  \"amount\": 99.90,\n  \"installments\": 1,\n  \"card_last_digits\": \"4242\",\n  \"card_brand\": \"visa\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create InfinitePay Payment",
+          "request": {
+            "method": "POST",
+            "url": "{{payments_url}}/payments/infinitepay/create",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_order\": 1,\n  \"payment_method\": \"credit_card\",\n  \"amount\": 99.90,\n  \"installments\": 1,\n  \"card_last_digits\": \"4242\",\n  \"card_brand\": \"visa\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Approve Payment",
+          "request": {
+            "method": "POST",
+            "url": "{{payments_url}}/payments/1/approve?transaction_id=TXN_ABC123"
+          }
+        },
+        {
+          "name": "Reject Payment",
+          "request": {
+            "method": "POST",
+            "url": "{{payments_url}}/payments/1/reject"
+          }
+        },
+        {
+          "name": "Update Transaction ID",
+          "request": {
+            "method": "POST",
+            "url": "{{payments_url}}/payments/1/update-transaction?transaction_id=TXN_REAL_456"
+          }
+        },
+        {
+          "name": "Get Order Payments",
+          "request": {
+            "method": "GET",
+            "url": "{{payments_url}}/payments/order/1"
+          }
+        },
+        {
+          "name": "Webhook InfinitePay",
+          "request": {
+            "method": "POST",
+            "url": "{{payments_url}}/payments/webhook/infinitepay",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"payment.approved\",\n  \"id\": \"TXN_ABC123\",\n  \"status\": \"approved\",\n  \"amount\": 9990,\n  \"payment_method\": \"credit_card\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coupons",
+      "item": [
+        {
+          "name": "Create Coupon",
+          "request": {
+            "method": "POST",
+            "url": "{{coupons_url}}/coupons",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"PROMO10\",\n  \"description\": \"10% de desconto\",\n  \"discount_type\": \"percent\",\n  \"discount_value\": 10.00,\n  \"valid_from\": \"2025-01-01\",\n  \"valid_until\": \"2025-12-31\",\n  \"usage_limit\": 100,\n  \"min_purchase_amount\": 50.00\n}"
+            }
+          }
+        },
+        {
+          "name": "Validate Coupon",
+          "request": {
+            "method": "GET",
+            "url": "{{coupons_url}}/coupons/PROMO10"
+          }
+        },
+        {
+          "name": "Use Coupon",
+          "request": {
+            "method": "POST",
+            "url": "{{coupons_url}}/coupons/1/use?user_id=1&order_id=1&discount_applied=9.99"
+          }
+        },
+        {
+          "name": "List Coupons",
+          "request": {
+            "method": "GET",
+            "url": "{{coupons_url}}/coupons"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "url": "{{leads_url}}/leads",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Maria Souza\",\n  \"email\": \"maria@email.com\",\n  \"phone\": \"11977777777\",\n  \"source\": \"instagram\",\n  \"message\": \"Tenho interesse no plano premium\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Leads",
+          "request": {
+            "method": "GET",
+            "url": "{{leads_url}}/leads"
+          }
+        },
+        {
+          "name": "Get Lead",
+          "request": {
+            "method": "GET",
+            "url": "{{leads_url}}/leads/1"
+          }
+        }
+      ]
+    }
+  ]
+}
