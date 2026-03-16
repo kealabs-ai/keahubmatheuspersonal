@@ -21,20 +21,18 @@ pipeline {
 
                     export PATH=$PATH:/usr/local/bin:/usr/bin:/bin
 
-                    DOCKER=$(which docker 2>/dev/null || find /usr /usr/local -name docker -type f 2>/dev/null | head -1)
-                    DOCKER_COMPOSE=$(which docker-compose 2>/dev/null || find /usr /usr/local -name docker-compose -type f 2>/dev/null | head -1)
+                    DOCKER=/usr/bin/docker
+                    DOCKER_COMPOSE=/usr/local/bin/docker-compose
                     echo "Docker: $DOCKER"
                     echo "Docker Compose: $DOCKER_COMPOSE"
 
-                    if [ -z "$DOCKER" ]; then
-                        echo "ERROR: docker not found"
-                        find / -name docker -type f 2>/dev/null
+                    if [ ! -f "$DOCKER" ]; then
+                        echo "ERROR: docker not found at $DOCKER"
                         exit 1
                     fi
 
-                    if [ -z "$DOCKER_COMPOSE" ]; then
-                        echo "ERROR: docker-compose not found"
-                        find / -name docker-compose -type f 2>/dev/null
+                    if [ ! -f "$DOCKER_COMPOSE" ]; then
+                        echo "ERROR: docker-compose not found at $DOCKER_COMPOSE"
                         exit 1
                     fi
 
