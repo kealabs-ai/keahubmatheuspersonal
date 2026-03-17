@@ -53,6 +53,15 @@ ENVEOF
                         cp services/database.py "$service"
                     done
 
+                    # Garantir buildx instalado (requerido pelo compose v5+)
+                    BUILDX_VERSION="v0.17.1"
+                    BUILDX_PATH="/var/jenkins_home/.docker/cli-plugins/docker-buildx"
+                    if ! $DOCKER buildx version 2>/dev/null | grep -q "v0\.1[7-9]\|v0\.[2-9][0-9]\|v[1-9]"; then
+                        mkdir -p /var/jenkins_home/.docker/cli-plugins
+                        curl -fsSL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" -o "$BUILDX_PATH"
+                        chmod +x "$BUILDX_PATH"
+                    fi
+
                     $DOCKER_COMPOSE down --remove-orphans || true
 
                     $DOCKER_COMPOSE build --no-cache

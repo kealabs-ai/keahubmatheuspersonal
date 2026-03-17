@@ -4,12 +4,12 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "users_url",         "value": "http://localhost:8001" },
-    { "key": "subscriptions_url", "value": "http://localhost:8002" },
-    { "key": "orders_url",        "value": "http://localhost:8003" },
-    { "key": "payments_url",      "value": "http://localhost:8004" },
-    { "key": "coupons_url",       "value": "http://localhost:8005" },
-    { "key": "leads_url",         "value": "http://localhost:8006" }
+    { "key": "users_url",         "value": "https://srv1023256.hstgr.cloud:8443/api/users" },
+    { "key": "subscriptions_url", "value": "https://srv1023256.hstgr.cloud:8443/api/subscriptions" },
+    { "key": "orders_url",        "value": "https://srv1023256.hstgr.cloud:8443/api/orders" },
+    { "key": "payments_url",      "value": "https://srv1023256.hstgr.cloud:8443/api/payments" },
+    { "key": "coupons_url",       "value": "https://srv1023256.hstgr.cloud:8443/api/coupons" },
+    { "key": "leads_url",         "value": "https://srv1023256.hstgr.cloud:8443/api/leads" }
   ],
   "item": [
     {
