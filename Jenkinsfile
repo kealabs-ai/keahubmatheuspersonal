@@ -61,11 +61,10 @@ ENVEOF
                         chmod +x "$BUILDX_PATH"
                     fi
 
-                    $DOCKER_COMPOSE down --remove-orphans || true
-
                     $DOCKER_COMPOSE build --no-cache
-                    $DOCKER_COMPOSE up -d --force-recreate
-                    $DOCKER_COMPOSE ps
+
+                    $DOCKER stack deploy -c docker-compose.yml matheuspersonal --with-registry-auth
+                    $DOCKER stack ps matheuspersonal
                 '''
             }
         }

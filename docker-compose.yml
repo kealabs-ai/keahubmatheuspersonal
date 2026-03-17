@@ -11,18 +11,21 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    restart: always
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mp-users.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/users`)"
+        - "traefik.http.routers.mp-users.entrypoints=https"
+        - "traefik.http.routers.mp-users.tls=true"
+        - "traefik.http.middlewares.mp-users-strip.stripprefix.prefixes=/api/users"
+        - "traefik.http.routers.mp-users.middlewares=mp-users-strip"
+        - "traefik.http.services.mp-users.loadbalancer.server.port=8000"
     networks:
       - matheuspersonal
       - easypanel
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-users.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/users`)"
-      - "traefik.http.routers.mp-users.entrypoints=https"
-      - "traefik.http.routers.mp-users.tls=true"
-      - "traefik.http.middlewares.mp-users-strip.stripprefix.prefixes=/api/users"
-      - "traefik.http.routers.mp-users.middlewares=mp-users-strip"
-      - "traefik.http.services.mp-users.loadbalancer.server.port=8000"
 
   subscriptions-service:
     build:
@@ -36,18 +39,21 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    restart: always
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mp-subscriptions.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/subscriptions`)"
+        - "traefik.http.routers.mp-subscriptions.entrypoints=https"
+        - "traefik.http.routers.mp-subscriptions.tls=true"
+        - "traefik.http.middlewares.mp-subscriptions-strip.stripprefix.prefixes=/api/subscriptions"
+        - "traefik.http.routers.mp-subscriptions.middlewares=mp-subscriptions-strip"
+        - "traefik.http.services.mp-subscriptions.loadbalancer.server.port=8000"
     networks:
       - matheuspersonal
       - easypanel
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-subscriptions.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/subscriptions`)"
-      - "traefik.http.routers.mp-subscriptions.entrypoints=https"
-      - "traefik.http.routers.mp-subscriptions.tls=true"
-      - "traefik.http.middlewares.mp-subscriptions-strip.stripprefix.prefixes=/api/subscriptions"
-      - "traefik.http.routers.mp-subscriptions.middlewares=mp-subscriptions-strip"
-      - "traefik.http.services.mp-subscriptions.loadbalancer.server.port=8000"
 
   orders-service:
     build:
@@ -61,18 +67,21 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    restart: always
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mp-orders.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/orders`)"
+        - "traefik.http.routers.mp-orders.entrypoints=https"
+        - "traefik.http.routers.mp-orders.tls=true"
+        - "traefik.http.middlewares.mp-orders-strip.stripprefix.prefixes=/api/orders"
+        - "traefik.http.routers.mp-orders.middlewares=mp-orders-strip"
+        - "traefik.http.services.mp-orders.loadbalancer.server.port=8000"
     networks:
       - matheuspersonal
       - easypanel
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-orders.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/orders`)"
-      - "traefik.http.routers.mp-orders.entrypoints=https"
-      - "traefik.http.routers.mp-orders.tls=true"
-      - "traefik.http.middlewares.mp-orders-strip.stripprefix.prefixes=/api/orders"
-      - "traefik.http.routers.mp-orders.middlewares=mp-orders-strip"
-      - "traefik.http.services.mp-orders.loadbalancer.server.port=8000"
 
   payments-service:
     build:
@@ -86,18 +95,21 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    restart: always
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mp-payments.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/payments`)"
+        - "traefik.http.routers.mp-payments.entrypoints=https"
+        - "traefik.http.routers.mp-payments.tls=true"
+        - "traefik.http.middlewares.mp-payments-strip.stripprefix.prefixes=/api/payments"
+        - "traefik.http.routers.mp-payments.middlewares=mp-payments-strip"
+        - "traefik.http.services.mp-payments.loadbalancer.server.port=8000"
     networks:
       - matheuspersonal
       - easypanel
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-payments.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/payments`)"
-      - "traefik.http.routers.mp-payments.entrypoints=https"
-      - "traefik.http.routers.mp-payments.tls=true"
-      - "traefik.http.middlewares.mp-payments-strip.stripprefix.prefixes=/api/payments"
-      - "traefik.http.routers.mp-payments.middlewares=mp-payments-strip"
-      - "traefik.http.services.mp-payments.loadbalancer.server.port=8000"
 
   coupons-service:
     build:
@@ -111,18 +123,21 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    restart: always
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mp-coupons.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/coupons`)"
+        - "traefik.http.routers.mp-coupons.entrypoints=https"
+        - "traefik.http.routers.mp-coupons.tls=true"
+        - "traefik.http.middlewares.mp-coupons-strip.stripprefix.prefixes=/api/coupons"
+        - "traefik.http.routers.mp-coupons.middlewares=mp-coupons-strip"
+        - "traefik.http.services.mp-coupons.loadbalancer.server.port=8000"
     networks:
       - matheuspersonal
       - easypanel
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-coupons.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/coupons`)"
-      - "traefik.http.routers.mp-coupons.entrypoints=https"
-      - "traefik.http.routers.mp-coupons.tls=true"
-      - "traefik.http.middlewares.mp-coupons-strip.stripprefix.prefixes=/api/coupons"
-      - "traefik.http.routers.mp-coupons.middlewares=mp-coupons-strip"
-      - "traefik.http.services.mp-coupons.loadbalancer.server.port=8000"
 
   leads-service:
     build:
@@ -136,21 +151,24 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    restart: always
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mp-leads.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/leads`)"
+        - "traefik.http.routers.mp-leads.entrypoints=https"
+        - "traefik.http.routers.mp-leads.tls=true"
+        - "traefik.http.middlewares.mp-leads-strip.stripprefix.prefixes=/api/leads"
+        - "traefik.http.routers.mp-leads.middlewares=mp-leads-strip"
+        - "traefik.http.services.mp-leads.loadbalancer.server.port=8000"
     networks:
       - matheuspersonal
       - easypanel
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-leads.rule=Host(`srv1023256.hstgr.cloud`) && PathPrefix(`/api/leads`)"
-      - "traefik.http.routers.mp-leads.entrypoints=https"
-      - "traefik.http.routers.mp-leads.tls=true"
-      - "traefik.http.middlewares.mp-leads-strip.stripprefix.prefixes=/api/leads"
-      - "traefik.http.routers.mp-leads.middlewares=mp-leads-strip"
-      - "traefik.http.services.mp-leads.loadbalancer.server.port=8000"
 
 networks:
   matheuspersonal:
-    driver: bridge
+    driver: overlay
   easypanel:
     external: true
