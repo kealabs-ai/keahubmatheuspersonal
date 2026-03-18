@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import date
 import sys
@@ -6,7 +7,17 @@ sys.path.append('..')
 from database import get_db
 import bcrypt
 
+
 app = FastAPI()
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # ou especifique o domínio: ["https://www.matheuspersonal.com.br"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 from typing import Optional
 
