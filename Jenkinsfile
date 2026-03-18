@@ -64,8 +64,13 @@ ENVEOF
                     $DOCKER_COMPOSE build --no-cache
 
                     $DOCKER stack rm matheuspersonal || true
-                    sleep 15
-                    $DOCKER network rm matheuspersonal_matheuspersonal || true
+                    sleep 30
+
+                    # Aguarda rede ser removida
+                    for i in $(seq 1 10); do
+                        $DOCKER network rm matheuspersonal_matheuspersonal 2>/dev/null && break || true
+                        sleep 5
+                    done
 
                     $DOCKER stack deploy -c docker-compose.yml matheuspersonal --with-registry-auth
                     $DOCKER stack ps matheuspersonal
