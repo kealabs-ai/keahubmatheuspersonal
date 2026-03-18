@@ -8,12 +8,14 @@ import bcrypt
 
 app = FastAPI()
 
+from typing import Optional
+
 class User(BaseModel):
     name: str
     email: str
     phone: str
     cpf: str
-    birth_date: date
+    birth_date: Optional[date] = None
     cep: str
     address: str
     number: str
@@ -33,9 +35,22 @@ def create_user(user: User):
         cursor.execute("""INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number, 
                          neighborhood, city, state, country_code, username, password) 
                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                      (user.name, user.email, user.phone, user.cpf, user.birth_date, user.cep, 
-                       user.address, user.number, user.neighborhood, user.city, user.state, 
-                       user.country_code, user.username, hashed))
+                      (
+                          user.name,
+                          user.email,
+                          user.phone,
+                          user.cpf,
+                          user.birth_date if user.birth_date is not None else None,
+                          user.cep,
+                          user.address,
+                          user.number,
+                          user.neighborhood,
+                          user.city,
+                          user.state,
+                          user.country_code,
+                          user.username,
+                          hashed
+                      ))
         conn.commit()
         return {"id": cursor.lastrowid}
     except Exception as e:
@@ -62,9 +77,19 @@ def update_user(user_id: int, user: User):
     cursor = conn.cursor()
     try:
         cursor.execute("""UPDATE users SET name=%s, email=%s, phone=%s, address=%s, number=%s, 
-                         neighborhood=%s, city=%s, state=%s WHERE id_user=%s""",
-                      (user.name, user.email, user.phone, user.address, user.number, 
-                       user.neighborhood, user.city, user.state, user_id))
+                         neighborhood=%s, city=%s, state=%s, birth_date=%s WHERE id_user=%s""",
+                      (
+                          user.name,
+                          user.email,
+                          user.phone,
+                          user.address,
+                          user.number,
+                          user.neighborhood,
+                          user.city,
+                          user.state,
+                          user.birth_date if user.birth_date is not None else None,
+                          user_id
+                      ))
         conn.commit()
         return {"updated": cursor.rowcount}
     finally:
