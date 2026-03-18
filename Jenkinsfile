@@ -63,6 +63,10 @@ ENVEOF
 
                     $DOCKER_COMPOSE build --no-cache
 
+                    $DOCKER stack rm matheuspersonal || true
+                    sleep 15
+                    $DOCKER network rm matheuspersonal_matheuspersonal || true
+
                     $DOCKER stack deploy -c docker-compose.yml matheuspersonal --with-registry-auth
                     $DOCKER stack ps matheuspersonal
                 '''
