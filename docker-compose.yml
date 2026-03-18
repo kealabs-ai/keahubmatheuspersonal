@@ -1,14 +1,13 @@
 services:
   users-service:
     image: matheuspersonal/users:latest
-    env_file:
-      - .env
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
     deploy:
       replicas: 1
       restart_policy:
@@ -27,14 +26,13 @@ services:
 
   subscriptions-service:
     image: matheuspersonal/subscriptions:latest
-    env_file:
-      - .env
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
     deploy:
       replicas: 1
       restart_policy:
@@ -53,14 +51,13 @@ services:
 
   orders-service:
     image: matheuspersonal/orders:latest
-    env_file:
-      - .env
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
     deploy:
       replicas: 1
       restart_policy:
@@ -79,14 +76,13 @@ services:
 
   payments-service:
     image: matheuspersonal/payments:latest
-    env_file:
-      - .env
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
     deploy:
       replicas: 1
       restart_policy:
@@ -105,14 +101,13 @@ services:
 
   coupons-service:
     image: matheuspersonal/coupons:latest
-    env_file:
-      - .env
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
     deploy:
       replicas: 1
       restart_policy:
@@ -131,14 +126,13 @@ services:
 
   leads-service:
     image: matheuspersonal/leads:latest
-    env_file:
-      - .env
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
     deploy:
       replicas: 1
       restart_policy:
