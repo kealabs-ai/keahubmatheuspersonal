@@ -61,7 +61,13 @@ ENVEOF
                         chmod +x "$BUILDX_PATH"
                     fi
 
-                    $DOCKER_COMPOSE build --no-cache
+                    # Build das imagens com tags explícitas
+                    $DOCKER build -t matheuspersonal/users:latest       -f services/users/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/subscriptions:latest -f services/subscriptions/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/orders:latest      -f services/orders/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/payments:latest    -f services/payments/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/coupons:latest     -f services/coupons/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/leads:latest       -f services/leads/Dockerfile services/
 
                     $DOCKER stack rm matheuspersonal || true
                     sleep 30

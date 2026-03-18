@@ -1,8 +1,6 @@
 services:
   users-service:
-    build:
-      context: ./services
-      dockerfile: users/Dockerfile
+    image: matheuspersonal/users:latest
     env_file:
       - .env
     environment:
@@ -28,9 +26,7 @@ services:
       - easypanel
 
   subscriptions-service:
-    build:
-      context: ./services
-      dockerfile: subscriptions/Dockerfile
+    image: matheuspersonal/subscriptions:latest
     env_file:
       - .env
     environment:
@@ -56,9 +52,7 @@ services:
       - easypanel
 
   orders-service:
-    build:
-      context: ./services
-      dockerfile: orders/Dockerfile
+    image: matheuspersonal/orders:latest
     env_file:
       - .env
     environment:
@@ -84,9 +78,7 @@ services:
       - easypanel
 
   payments-service:
-    build:
-      context: ./services
-      dockerfile: payments/Dockerfile
+    image: matheuspersonal/payments:latest
     env_file:
       - .env
     environment:
@@ -112,9 +104,7 @@ services:
       - easypanel
 
   coupons-service:
-    build:
-      context: ./services
-      dockerfile: coupons/Dockerfile
+    image: matheuspersonal/coupons:latest
     env_file:
       - .env
     environment:
@@ -140,9 +130,7 @@ services:
       - easypanel
 
   leads-service:
-    build:
-      context: ./services
-      dockerfile: leads/Dockerfile
+    image: matheuspersonal/leads:latest
     env_file:
       - .env
     environment:
