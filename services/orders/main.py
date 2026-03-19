@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from decimal import Decimal
 from typing import List, Optional
@@ -10,6 +12,10 @@ import uuid
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["https://matheuspersonal.com.br", "https://www.matheuspersonal.com.br"], allow_methods=["*"], allow_headers=["*"])
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=422, content={"detail": exc.errors(), "body": str(exc.body)})
 
 class OrderItem(BaseModel):
     plan_name: str
