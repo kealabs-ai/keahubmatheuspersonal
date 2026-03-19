@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import date
+from typing import Optional
 import sys
 sys.path.append('..')
 from database import get_db
@@ -21,7 +22,7 @@ class User(BaseModel):
     email: str
     phone: str
     cpf: str
-    birth_date: date
+    birth_date: Optional[date] = None
     cep: str
     address: str
     number: str
