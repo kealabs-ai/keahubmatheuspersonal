@@ -7,7 +7,7 @@ sys.path.append('..')
 from database import get_db
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["https://matheuspersonal.com.br", "https://www.matheuspersonal.com.br"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 class Lead(BaseModel):
     name: Optional[str] = None

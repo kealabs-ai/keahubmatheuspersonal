@@ -10,7 +10,7 @@ from database import get_db
 import json
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["https://matheuspersonal.com.br", "https://www.matheuspersonal.com.br"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 class Payment(BaseModel):
     id_order: int
