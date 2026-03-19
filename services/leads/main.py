@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import sys
@@ -6,6 +7,7 @@ sys.path.append('..')
 from database import get_db
 
 app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["https://matheuspersonal.com.br"], allow_methods=["*"], allow_headers=["*"])
 
 class Lead(BaseModel):
     name: Optional[str] = None

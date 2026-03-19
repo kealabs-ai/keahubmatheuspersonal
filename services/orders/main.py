@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from decimal import Decimal
 from typing import List, Optional
@@ -8,6 +9,7 @@ from database import get_db
 import uuid
 
 app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["https://matheuspersonal.com.br"], allow_methods=["*"], allow_headers=["*"])
 
 class OrderItem(BaseModel):
     plan_name: str
