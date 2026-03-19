@@ -65,7 +65,7 @@ def create_user(user: User):
         conn.commit()
         return {"id": cursor.lastrowid}
     except Exception as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(status_code=400, detail=f"Error creating user: {e}")
     finally:
         cursor.close()
         conn.close()
