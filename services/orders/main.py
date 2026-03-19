@@ -9,7 +9,7 @@ from database import get_db
 import uuid
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["https://matheuspersonal.com.br"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["https://matheuspersonal.com.br", "https://www.matheuspersonal.com.br"], allow_methods=["*"], allow_headers=["*"])
 
 class OrderItem(BaseModel):
     plan_name: str
