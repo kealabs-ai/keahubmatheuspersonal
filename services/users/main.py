@@ -35,7 +35,6 @@ class User(BaseModel):
     state: str
     username: str
     password: str
-    country_code: str = '+55'
 
 @app.post("/users")
 def create_user(user: User):
@@ -44,8 +43,8 @@ def create_user(user: User):
     hashed = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
     try:
         cursor.execute("""INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number, 
-                         neighborhood, city, state, country_code, username, password) 
-                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                         neighborhood, city, state, username, password) 
+                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                       (
                           user.name,
                           user.email,
@@ -58,7 +57,6 @@ def create_user(user: User):
                           user.neighborhood,
                           user.city,
                           user.state,
-                          user.country_code,
                           user.username,
                           hashed
                       ))
