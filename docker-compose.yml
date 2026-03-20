@@ -39,10 +39,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-subscriptions.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/subscriptions`)"
+      - "traefik.http.routers.mp-subscriptions.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
       - "traefik.http.routers.mp-subscriptions.entrypoints=https"
       - "traefik.http.routers.mp-subscriptions.tls=true"
-      - "traefik.http.middlewares.mp-strip-subscriptions.stripprefix.prefixes=/api/subscriptions"
+      - "traefik.http.middlewares.mp-strip-subscriptions.stripprefix.prefixes=/api"
       - "traefik.http.routers.mp-subscriptions.middlewares=mp-strip-subscriptions,mp-cors"
       - "traefik.http.services.mp-subscriptions.loadbalancer.server.port=8000"
     deploy:
@@ -63,10 +63,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-orders.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/orders`)"
+      - "traefik.http.routers.mp-orders.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
       - "traefik.http.routers.mp-orders.entrypoints=https"
       - "traefik.http.routers.mp-orders.tls=true"
-      - "traefik.http.middlewares.mp-strip-orders.stripprefix.prefixes=/api/orders"
+      - "traefik.http.middlewares.mp-strip-orders.stripprefix.prefixes=/api"
       - "traefik.http.routers.mp-orders.middlewares=mp-strip-orders,mp-cors"
       - "traefik.http.services.mp-orders.loadbalancer.server.port=8000"
     deploy:
@@ -87,10 +87,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-payments.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/payments`)"
+      - "traefik.http.routers.mp-payments.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
       - "traefik.http.routers.mp-payments.entrypoints=https"
       - "traefik.http.routers.mp-payments.tls=true"
-      - "traefik.http.middlewares.mp-strip-payments.stripprefix.prefixes=/api/payments"
+      - "traefik.http.middlewares.mp-strip-payments.stripprefix.prefixes=/api"
       - "traefik.http.routers.mp-payments.middlewares=mp-strip-payments,mp-cors"
       - "traefik.http.services.mp-payments.loadbalancer.server.port=8000"
     deploy:
@@ -111,10 +111,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-coupons.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/coupons`)"
+      - "traefik.http.routers.mp-coupons.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
       - "traefik.http.routers.mp-coupons.entrypoints=https"
       - "traefik.http.routers.mp-coupons.tls=true"
-      - "traefik.http.middlewares.mp-strip-coupons.stripprefix.prefixes=/api/coupons"
+      - "traefik.http.middlewares.mp-strip-coupons.stripprefix.prefixes=/api"
       - "traefik.http.routers.mp-coupons.middlewares=mp-strip-coupons,mp-cors"
       - "traefik.http.services.mp-coupons.loadbalancer.server.port=8000"
     deploy:
@@ -135,10 +135,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-leads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/leads`)"
+      - "traefik.http.routers.mp-leads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
       - "traefik.http.routers.mp-leads.entrypoints=https"
       - "traefik.http.routers.mp-leads.tls=true"
-      - "traefik.http.middlewares.mp-strip-leads.stripprefix.prefixes=/api/leads"
+      - "traefik.http.middlewares.mp-strip-leads.stripprefix.prefixes=/api"
       - "traefik.http.routers.mp-leads.middlewares=mp-strip-leads,mp-cors"
       - "traefik.http.services.mp-leads.loadbalancer.server.port=8000"
     deploy:
