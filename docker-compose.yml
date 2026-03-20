@@ -10,10 +10,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/users`)"
+      - "traefik.http.routers.mp-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
       - "traefik.http.routers.mp-users.entrypoints=https"
       - "traefik.http.routers.mp-users.tls=true"
-      - "traefik.http.middlewares.mp-strip-users.stripprefix.prefixes=/api/users"
+      - "traefik.http.middlewares.mp-strip-users.stripprefix.prefixes=/api"
       - "traefik.http.middlewares.mp-cors.headers.accesscontrolalloworiginlist=*"
       - "traefik.http.middlewares.mp-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
       - "traefik.http.middlewares.mp-cors.headers.accesscontrolallowheaders=Content-Type,Authorization"
