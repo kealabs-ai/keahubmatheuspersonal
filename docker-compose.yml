@@ -1,4 +1,22 @@
 services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - users-service
+      - subscriptions-service
+      - orders-service
+      - payments-service
+      - coupons-service
+      - leads-service
+    networks:
+      - matheuspersonal
+
   users-service:
     image: matheuspersonal/users:latest
     environment:
@@ -8,26 +26,8 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/users`)"
-      - "traefik.http.routers.mp-users.entrypoints=https"
-      - "traefik.http.routers.mp-users.tls=true"
-      - "traefik.http.middlewares.mp-users-strip.stripprefix.prefixes=/api"
-      - "traefik.http.middlewares.mp-cors.headers.accesscontrolalloworiginlist=*"
-      - "traefik.http.middlewares.mp-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
-      - "traefik.http.middlewares.mp-cors.headers.accesscontrolallowheaders=*"
-      - "traefik.http.middlewares.mp-cors.headers.accesscontrolmaxage=1728000"
-      - "traefik.http.middlewares.mp-cors.headers.addvaryheader=true"
-      - "traefik.http.routers.mp-users.middlewares=mp-users-strip,mp-cors"
-      - "traefik.http.services.mp-users.loadbalancer.server.port=8000"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
     networks:
       - matheuspersonal
-      - easypanel
 
   subscriptions-service:
     image: matheuspersonal/subscriptions:latest
@@ -38,21 +38,8 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-subscriptions.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/subscriptions`)"
-      - "traefik.http.routers.mp-subscriptions.entrypoints=https"
-      - "traefik.http.routers.mp-subscriptions.tls=true"
-      - "traefik.http.middlewares.mp-subscriptions-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.mp-subscriptions.middlewares=mp-subscriptions-strip,mp-cors"
-      - "traefik.http.services.mp-subscriptions.loadbalancer.server.port=8000"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
     networks:
       - matheuspersonal
-      - easypanel
 
   orders-service:
     image: matheuspersonal/orders:latest
@@ -63,21 +50,8 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-orders.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/orders`)"
-      - "traefik.http.routers.mp-orders.entrypoints=https"
-      - "traefik.http.routers.mp-orders.tls=true"
-      - "traefik.http.middlewares.mp-orders-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.mp-orders.middlewares=mp-orders-strip,mp-cors"
-      - "traefik.http.services.mp-orders.loadbalancer.server.port=8000"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
     networks:
       - matheuspersonal
-      - easypanel
 
   payments-service:
     image: matheuspersonal/payments:latest
@@ -88,21 +62,8 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-payments.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/payments`)"
-      - "traefik.http.routers.mp-payments.entrypoints=https"
-      - "traefik.http.routers.mp-payments.tls=true"
-      - "traefik.http.middlewares.mp-payments-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.mp-payments.middlewares=mp-payments-strip,mp-cors"
-      - "traefik.http.services.mp-payments.loadbalancer.server.port=8000"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
     networks:
       - matheuspersonal
-      - easypanel
 
   coupons-service:
     image: matheuspersonal/coupons:latest
@@ -113,21 +74,8 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-coupons.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/coupons`)"
-      - "traefik.http.routers.mp-coupons.entrypoints=https"
-      - "traefik.http.routers.mp-coupons.tls=true"
-      - "traefik.http.middlewares.mp-coupons-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.mp-coupons.middlewares=mp-coupons-strip,mp-cors"
-      - "traefik.http.services.mp-coupons.loadbalancer.server.port=8000"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
     networks:
       - matheuspersonal
-      - easypanel
 
   leads-service:
     image: matheuspersonal/leads:latest
@@ -138,24 +86,9 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-leads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/leads`)"
-      - "traefik.http.routers.mp-leads.entrypoints=https"
-      - "traefik.http.routers.mp-leads.tls=true"
-      - "traefik.http.middlewares.mp-leads-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.mp-leads.middlewares=mp-leads-strip,mp-cors"
-      - "traefik.http.services.mp-leads.loadbalancer.server.port=8000"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
     networks:
       - matheuspersonal
-      - easypanel
 
 networks:
   matheuspersonal:
-    driver: overlay
-  easypanel:
-    external: true
+    driver: bridge
