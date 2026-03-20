@@ -10,7 +10,7 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.mp-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/users`)"
       - "traefik.http.routers.mp-users.entrypoints=https"
       - "traefik.http.routers.mp-users.tls=true"
       - "traefik.http.middlewares.mp-strip-users.stripprefix.prefixes=/api"
@@ -39,7 +39,7 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-subscriptions.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.mp-subscriptions.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/subscriptions`)"
       - "traefik.http.routers.mp-subscriptions.entrypoints=https"
       - "traefik.http.routers.mp-subscriptions.tls=true"
       - "traefik.http.middlewares.mp-strip-subscriptions.stripprefix.prefixes=/api"
@@ -63,7 +63,7 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-orders.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.mp-orders.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/orders`)"
       - "traefik.http.routers.mp-orders.entrypoints=https"
       - "traefik.http.routers.mp-orders.tls=true"
       - "traefik.http.middlewares.mp-strip-orders.stripprefix.prefixes=/api"
@@ -87,7 +87,7 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-payments.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.mp-payments.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/payments`)"
       - "traefik.http.routers.mp-payments.entrypoints=https"
       - "traefik.http.routers.mp-payments.tls=true"
       - "traefik.http.middlewares.mp-strip-payments.stripprefix.prefixes=/api"
@@ -111,7 +111,7 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-coupons.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.mp-coupons.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/coupons`)"
       - "traefik.http.routers.mp-coupons.entrypoints=https"
       - "traefik.http.routers.mp-coupons.tls=true"
       - "traefik.http.middlewares.mp-strip-coupons.stripprefix.prefixes=/api"
@@ -135,7 +135,7 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-leads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.mp-leads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/leads`)"
       - "traefik.http.routers.mp-leads.entrypoints=https"
       - "traefik.http.routers.mp-leads.tls=true"
       - "traefik.http.middlewares.mp-strip-leads.stripprefix.prefixes=/api"
