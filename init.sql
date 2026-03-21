@@ -137,3 +137,15 @@ CREATE TABLE IF NOT EXISTS user_addresses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_user) REFERENCES users(id_user)
 );
+
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id_feedback INT PRIMARY KEY AUTO_INCREMENT,
+    name        VARCHAR(255) NOT NULL,
+    age         TINYINT UNSIGNED NOT NULL,
+    city        VARCHAR(100) NOT NULL,
+    title       VARCHAR(255) NOT NULL,
+    testimonial TEXT NOT NULL,
+    rating      TINYINT UNSIGNED NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    status      ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

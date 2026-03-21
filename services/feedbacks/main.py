@@ -52,7 +52,7 @@ def list_feedbacks(status: Optional[str] = None):
 def get_feedback(feedback_id: int):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM feedbacks WHERE id=%s", (feedback_id,))
+    cursor.execute("SELECT * FROM feedbacks WHERE id_feedback=%s", (feedback_id,))
     feedback = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -64,7 +64,7 @@ def get_feedback(feedback_id: int):
 def approve_feedback(feedback_id: int):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE feedbacks SET status='approved' WHERE id=%s", (feedback_id,))
+    cursor.execute("UPDATE feedbacks SET status='approved' WHERE id_feedback=%s", (feedback_id,))
     conn.commit()
     cursor.close()
     conn.close()
@@ -74,7 +74,7 @@ def approve_feedback(feedback_id: int):
 def reject_feedback(feedback_id: int):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE feedbacks SET status='rejected' WHERE id=%s", (feedback_id,))
+    cursor.execute("UPDATE feedbacks SET status='rejected' WHERE id_feedback=%s", (feedback_id,))
     conn.commit()
     cursor.close()
     conn.close()
