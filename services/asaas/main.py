@@ -12,14 +12,7 @@ from database import get_db
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-ASAAS_API_KEY = os.getenv("ASAAS_API_KEY")
 ASAAS_BASE_URL = os.getenv("ASAAS_BASE_URL", "https://sandbox.asaas.com/api/v3")
-
-HEADERS = {
-    "accept": "application/json",
-    "content-type": "application/json",
-    "access_token": ASAAS_API_KEY,
-}
 
 STATUS_MAP = {
     "CONFIRMED": "approved",
@@ -38,6 +31,13 @@ STATUS_MAP = {
     "CANCELLED": "rejected",
 }
 
+def get_headers():
+    return {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "access_token": os.getenv("ASAAS_API_KEY"),
+    }
+
 class AsaasCustomer(BaseModel):
     name: str
     email: str
@@ -51,12 +51,10 @@ class AsaasPayment(BaseModel):
     billing_type: str  # PIX, BOLETO, CREDIT_CARD
     description: Optional[str] = None
     installments: int = 1
-    # Dados do cliente
     customer_name: str
     customer_email: str
     customer_cpf_cnpj: str
     customer_phone: Optional[str] = None
-    # Dados do cartão (apenas para CREDIT_CARD)
     card_holder_name: Optional[str] = None
     card_number: Optional[str] = None
     card_expiry_month: Optional[str] = None
@@ -64,12 +62,14 @@ class AsaasPayment(BaseModel):
     card_ccv: Optional[str] = None
 
 def get_or_create_customer(customer: AsaasCustomer) -> str:
+    headers = get_headers()
     with httpx.Client() as client:
-        res = client.get(f"{ASAAS_BASE_URL}/customers", headers=HEADERS, params={"cpfCnpj": customer.cpf_cnpj})
+        res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
+        res.raise_for_status()
         data = res.json()
         if data.get("data"):
             return data["data"][0]["id"]
-        res = client.post(f"{ASAAS_BASE_URL}/customers", headers=HEADERS, json={
+        res = client.post(f"{ASAAS_BASE_URL}/customers", headers=headers, json={
             "name": customer.name,
             "email": customer.email,
             "cpfCnpj": customer.cpf_cnpj,
@@ -82,6 +82,7 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
 def create_checkout(payment: AsaasPayment):
     conn = get_db()
     cursor = conn.cursor()
+    headers = get_headers()
     try:
         customer_id = get_or_create_customer(AsaasCustomer(
             name=payment.customer_name,
@@ -90,16 +91,18 @@ def create_checkout(payment: AsaasPayment):
             phone=payment.customer_phone,
         ))
 
+        import datetime
         payload = {
             "customer": customer_id,
             "billingType": payment.billing_type,
             "value": float(payment.amount),
-            "dueDate": __import__("datetime").date.today().isoformat(),
+            "dueDate": datetime.date.today().isoformat(),
             "description": payment.description or f"Pedido #{payment.id_order}",
-            "installmentCount": payment.installments if payment.billing_type == "CREDIT_CARD" else None,
         }
 
         if payment.billing_type == "CREDIT_CARD":
+            payload["installmentCount"] = payment.installments
+            payload["installmentValue"] = round(float(payment.amount) / payment.installments, 2)
             payload["creditCard"] = {
                 "holderName": payment.card_holder_name,
                 "number": payment.card_number,
@@ -115,15 +118,22 @@ def create_checkout(payment: AsaasPayment):
             }
 
         with httpx.Client() as client:
-            res = client.post(f"{ASAAS_BASE_URL}/payments", headers=HEADERS, json=payload)
+            res = client.post(f"{ASAAS_BASE_URL}/payments", headers=headers, json=payload)
             res.raise_for_status()
             asaas_data = res.json()
 
         asaas_id = asaas_data["id"]
         status = STATUS_MAP.get(asaas_data.get("status", "PENDING"), "pending")
-        pix_code = asaas_data.get("pixQrCode") or asaas_data.get("encodedImage")
         boleto_url = asaas_data.get("bankSlipUrl")
         invoice_url = asaas_data.get("invoiceUrl")
+        pix_code = None
+
+        if payment.billing_type == "PIX":
+            with httpx.Client() as client:
+                pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
+                if pix_res.status_code == 200:
+                    pix_data = pix_res.json()
+                    pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
 
         cursor.execute("""INSERT INTO payments (id_order, payment_method, amount, installments,
                          payment_status, transaction_id)
@@ -158,17 +168,25 @@ def create_checkout(payment: AsaasPayment):
 
 @app.get("/asaas/payment/{asaas_id}/status")
 def get_payment_status(asaas_id: str):
+    headers = get_headers()
     with httpx.Client() as client:
-        res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}", headers=HEADERS)
+        res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}", headers=headers)
         res.raise_for_status()
         data = res.json()
+    pix_code = None
+    if data.get("billingType") == "PIX":
+        with httpx.Client() as client:
+            pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
+            if pix_res.status_code == 200:
+                pix_data = pix_res.json()
+                pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
     return {
         "asaas_id": asaas_id,
         "status": STATUS_MAP.get(data.get("status", "PENDING"), "pending"),
         "raw_status": data.get("status"),
         "value": data.get("value"),
         "billing_type": data.get("billingType"),
-        "pix_code": data.get("pixQrCode") or data.get("encodedImage"),
+        "pix_code": pix_code,
         "boleto_url": data.get("bankSlipUrl"),
         "invoice_url": data.get("invoiceUrl"),
     }
@@ -192,8 +210,7 @@ async def asaas_webhook(request: Request):
         payment_id, order_id = row
 
         if new_status == "approved":
-            cursor.execute("""UPDATE payments SET payment_status='approved', paid_at=NOW()
-                             WHERE id_payment=%s""", (payment_id,))
+            cursor.execute("UPDATE payments SET payment_status='approved', paid_at=NOW() WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='approved' WHERE id_order=%s", (order_id,))
         elif new_status == "rejected":
             cursor.execute("UPDATE payments SET payment_status='rejected' WHERE id_payment=%s", (payment_id,))
