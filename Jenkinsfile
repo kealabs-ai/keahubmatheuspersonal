@@ -68,6 +68,7 @@ ENVEOF
                     $DOCKER build -t matheuspersonal/payments:latest    -f services/payments/Dockerfile services/
                     $DOCKER build -t matheuspersonal/coupons:latest     -f services/coupons/Dockerfile services/
                     $DOCKER build -t matheuspersonal/leads:latest       -f services/leads/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/feedbacks:latest   -f services/feedbacks/Dockerfile services/
 
                     $DOCKER stack rm matheuspersonal || true
                     sleep 30
