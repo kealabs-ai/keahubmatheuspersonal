@@ -148,6 +148,30 @@ services:
     networks:
       - easypanel
 
+  feedbacks-service:
+    image: matheuspersonal/feedbacks:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-feedbacks.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/feedbacks`)"
+      - "traefik.http.routers.mp-feedbacks.entrypoints=https"
+      - "traefik.http.routers.mp-feedbacks.tls=true"
+      - "traefik.http.middlewares.mp-strip-feedbacks.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-feedbacks.middlewares=mp-strip-feedbacks,mp-cors"
+      - "traefik.http.services.mp-feedbacks.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
 networks:
   easypanel:
     external: true
