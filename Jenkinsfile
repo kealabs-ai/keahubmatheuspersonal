@@ -47,6 +47,8 @@ DB_USER=u549746795_matheusmp
 DB_PASSWORD=MP@2026!Passos
 DB_ROOT_PASSWORD=rootpassword
 JWT_SECRET=your-secret-key-change-in-production
+ASSAS_API_KEY=${ASAAS_API_KEY}
+ASSAS_BASE_URL=https://api.asaas.com/v3
 ENVEOF
 
                     for service in services/*/; do
@@ -69,6 +71,7 @@ ENVEOF
                     $DOCKER build -t matheuspersonal/coupons:latest     -f services/coupons/Dockerfile services/
                     $DOCKER build -t matheuspersonal/leads:latest       -f services/leads/Dockerfile services/
                     $DOCKER build -t matheuspersonal/feedbacks:latest   -f services/feedbacks/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/asaas:latest        -f services/asaas/Dockerfile services/
 
                     $DOCKER stack rm matheuspersonal || true
                     sleep 30
