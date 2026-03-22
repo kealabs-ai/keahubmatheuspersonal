@@ -33,10 +33,22 @@ STATUS_MAP = {
 }
 
 def get_headers():
+    api_key = os.getenv("ASAAS_API_KEY") or os.getenv("ASSAS_API_KEY")  # fallback typo
+    if not api_key:
+        raise HTTPException(500, "ASAAS_API_KEY não configurada")
     return {
         "accept": "application/json",
         "content-type": "application/json",
-        "access_token": os.getenv("ASAAS_API_KEY"),
+        "access_token": api_key,
+    }
+
+@app.get("/asaas/health")
+def health():
+    key = os.getenv("ASAAS_API_KEY") or os.getenv("ASSAS_API_KEY")
+    return {
+        "ASAAS_API_KEY_set": bool(key),
+        "ASAAS_API_KEY_preview": (key[:10] + "...") if key else None,
+        "ASAAS_BASE_URL": os.getenv("ASAAS_BASE_URL"),
     }
 
 class CreditCard(BaseModel):
