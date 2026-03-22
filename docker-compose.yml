@@ -182,7 +182,7 @@ services:
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
       ASAAS_API_KEY: ${ASAAS_API_KEY}
-      ASAAS_BASE_URL: ${ASAAS_BASE_URL:-https://api.asaas.com/v3}
+      ASAAS_BASE_URL: ${ASAAS_BASE_URL:-https://sandbox.asaas.com/api/v3}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-asaas.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/asaas`)"
