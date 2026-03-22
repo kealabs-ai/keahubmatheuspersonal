@@ -58,29 +58,60 @@ class CreditCardHolderInfo(BaseModel):
 
 class AsaasPayment(BaseModel):
     id_order: int
-    customer: str                    # ID do cliente já criado no Asaas ex: cus_000005041014
-    billing_type: str                # PIX, BOLETO, CREDIT_CARD
+    id_user: int
+    billing_type: str
     amount: Decimal
-    due_date: Optional[str] = None   # YYYY-MM-DD, default hoje
+    due_date: Optional[str] = None
     description: Optional[str] = None
     external_reference: Optional[str] = None
     installments: int = 1
     remote_ip: Optional[str] = None
-    # Cartão
-    credit_card: Optional[CreditCard] = None
-    credit_card_holder_info: Optional[CreditCardHolderInfo] = None
+    # Dados do cliente (vindos do frontend)
+    customer_name: str
+    customer_email: str
+    customer_cpf_cnpj: str
+    customer_phone: Optional[str] = None
+    # Dados do cartão (vindos do frontend)
+    card_number: Optional[str] = None
+    card_name: Optional[str] = None
+    card_expiry: Optional[str] = None   # formato MM/YY ou MM/YYYY
+    card_cvv: Optional[str] = None
+    # Endereço (opcional, buscado do banco se não enviado)
+    postal_code: Optional[str] = None
+    address_number: Optional[str] = None
+    address_complement: Optional[str] = None
 
 @app.post("/asaas/checkout", status_code=200)
 def create_checkout(payment: AsaasPayment, request: Request):
     conn = get_db()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     headers = get_headers()
     try:
+        # Buscar endereço do usuário no banco se não enviado
+        postal_code = payment.postal_code
+        address_number = payment.address_number
+        address_complement = payment.address_complement
+        if not postal_code or not address_number:
+            cursor.execute("SELECT cep, number, complement FROM user_addresses WHERE id_user=%s AND is_primary=1", (payment.id_user,))
+            addr = cursor.fetchone()
+            if addr:
+                postal_code = postal_code or addr["cep"]
+                address_number = address_number or addr["number"]
+                address_complement = address_complement or addr["complement"]
+
+        # Criar ou buscar customer no Asaas
+        customer_id = get_or_create_customer(AsaasCustomer(
+            name=payment.customer_name,
+            email=payment.customer_email,
+            cpf_cnpj=payment.customer_cpf_cnpj,
+            phone=payment.customer_phone,
+        ))
+
         due_date = payment.due_date or datetime.date.today().isoformat()
         remote_ip = payment.remote_ip or request.client.host
 
         payload = {
-            "customer": payment.customer,
+            "customer": customer_id,
             "billingType": payment.billing_type,
             "value": float(payment.amount),
             "dueDate": due_date,
@@ -90,27 +121,36 @@ def create_checkout(payment: AsaasPayment, request: Request):
         }
 
         if payment.billing_type == "CREDIT_CARD":
-            if not payment.credit_card or not payment.credit_card_holder_info:
-                raise HTTPException(400, "credit_card e credit_card_holder_info são obrigatórios para CREDIT_CARD")
+            if not payment.card_number or not payment.card_name or not payment.card_expiry or not payment.card_cvv:
+                raise HTTPException(400, "Dados do cartão incompletos")
+
+            # Parsear card_expiry MM/YY ou MM/YYYY
+            expiry_parts = payment.card_expiry.replace("-", "/").split("/")
+            expiry_month = expiry_parts[0].strip()
+            expiry_year = expiry_parts[1].strip()
+            if len(expiry_year) == 2:
+                expiry_year = "20" + expiry_year
+
             if payment.installments > 1:
                 payload["installmentCount"] = payment.installments
                 payload["installmentValue"] = round(float(payment.amount) / payment.installments, 2)
+
             payload["creditCard"] = {
-                "holderName": payment.credit_card.holder_name,
-                "number": payment.credit_card.number,
-                "expiryMonth": payment.credit_card.expiry_month,
-                "expiryYear": payment.credit_card.expiry_year,
-                "ccv": payment.credit_card.ccv,
+                "holderName": payment.card_name,
+                "number": payment.card_number,
+                "expiryMonth": expiry_month,
+                "expiryYear": expiry_year,
+                "ccv": payment.card_cvv,
             }
             payload["creditCardHolderInfo"] = {
-                "name": payment.credit_card_holder_info.name,
-                "email": payment.credit_card_holder_info.email,
-                "cpfCnpj": payment.credit_card_holder_info.cpf_cnpj,
-                "postalCode": payment.credit_card_holder_info.postal_code,
-                "addressNumber": payment.credit_card_holder_info.address_number,
-                "addressComplement": payment.credit_card_holder_info.address_complement,
-                "phone": payment.credit_card_holder_info.phone,
-                "mobilePhone": payment.credit_card_holder_info.mobile_phone,
+                "name": payment.customer_name,
+                "email": payment.customer_email,
+                "cpfCnpj": payment.customer_cpf_cnpj,
+                "postalCode": postal_code,
+                "addressNumber": address_number,
+                "addressComplement": address_complement,
+                "phone": payment.customer_phone,
+                "mobilePhone": payment.customer_phone,
             }
 
         with httpx.Client() as client:
