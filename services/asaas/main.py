@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Optional
 import os
 import httpx
+import datetime
 import sys
 sys.path.append('..')
 from database import get_db
@@ -38,83 +39,78 @@ def get_headers():
         "access_token": os.getenv("ASAAS_API_KEY"),
     }
 
-class AsaasCustomer(BaseModel):
+class CreditCard(BaseModel):
+    holder_name: str
+    number: str
+    expiry_month: str
+    expiry_year: str
+    ccv: str
+
+class CreditCardHolderInfo(BaseModel):
     name: str
     email: str
     cpf_cnpj: str
+    postal_code: str
+    address_number: str
+    address_complement: Optional[str] = None
     phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
 
 class AsaasPayment(BaseModel):
     id_order: int
-    id_user: int
+    customer: str                    # ID do cliente já criado no Asaas ex: cus_000005041014
+    billing_type: str                # PIX, BOLETO, CREDIT_CARD
     amount: Decimal
-    billing_type: str  # PIX, BOLETO, CREDIT_CARD
+    due_date: Optional[str] = None   # YYYY-MM-DD, default hoje
     description: Optional[str] = None
+    external_reference: Optional[str] = None
     installments: int = 1
-    customer_name: str
-    customer_email: str
-    customer_cpf_cnpj: str
-    customer_phone: Optional[str] = None
-    card_holder_name: Optional[str] = None
-    card_number: Optional[str] = None
-    card_expiry_month: Optional[str] = None
-    card_expiry_year: Optional[str] = None
-    card_ccv: Optional[str] = None
-
-def get_or_create_customer(customer: AsaasCustomer) -> str:
-    headers = get_headers()
-    with httpx.Client() as client:
-        res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
-        res.raise_for_status()
-        data = res.json()
-        if data.get("data"):
-            return data["data"][0]["id"]
-        res = client.post(f"{ASAAS_BASE_URL}/customers", headers=headers, json={
-            "name": customer.name,
-            "email": customer.email,
-            "cpfCnpj": customer.cpf_cnpj,
-            "phone": customer.phone,
-        })
-        res.raise_for_status()
-        return res.json()["id"]
+    remote_ip: Optional[str] = None
+    # Cartão
+    credit_card: Optional[CreditCard] = None
+    credit_card_holder_info: Optional[CreditCardHolderInfo] = None
 
 @app.post("/asaas/checkout", status_code=200)
-def create_checkout(payment: AsaasPayment):
+def create_checkout(payment: AsaasPayment, request: Request):
     conn = get_db()
     cursor = conn.cursor()
     headers = get_headers()
     try:
-        customer_id = get_or_create_customer(AsaasCustomer(
-            name=payment.customer_name,
-            email=payment.customer_email,
-            cpf_cnpj=payment.customer_cpf_cnpj,
-            phone=payment.customer_phone,
-        ))
+        due_date = payment.due_date or datetime.date.today().isoformat()
+        remote_ip = payment.remote_ip or request.client.host
 
-        import datetime
         payload = {
-            "customer": customer_id,
+            "customer": payment.customer,
             "billingType": payment.billing_type,
             "value": float(payment.amount),
-            "dueDate": datetime.date.today().isoformat(),
+            "dueDate": due_date,
             "description": payment.description or f"Pedido #{payment.id_order}",
+            "externalReference": payment.external_reference or str(payment.id_order),
+            "remoteIp": remote_ip,
         }
 
         if payment.billing_type == "CREDIT_CARD":
-            payload["installmentCount"] = payment.installments
-            payload["installmentValue"] = round(float(payment.amount) / payment.installments, 2)
+            if not payment.credit_card or not payment.credit_card_holder_info:
+                raise HTTPException(400, "credit_card e credit_card_holder_info são obrigatórios para CREDIT_CARD")
+            if payment.installments > 1:
+                payload["installmentCount"] = payment.installments
+                payload["installmentValue"] = round(float(payment.amount) / payment.installments, 2)
             payload["creditCard"] = {
-                "holderName": payment.card_holder_name,
-                "number": payment.card_number,
-                "expiryMonth": payment.card_expiry_month,
-                "expiryYear": payment.card_expiry_year,
-                "ccv": payment.card_ccv,
+                "holderName": payment.credit_card.holder_name,
+                "number": payment.credit_card.number,
+                "expiryMonth": payment.credit_card.expiry_month,
+                "expiryYear": payment.credit_card.expiry_year,
+                "ccv": payment.credit_card.ccv,
             }
             payload["creditCardHolderInfo"] = {
-                "name": payment.customer_name,
-                "email": payment.customer_email,
-                "cpfCnpj": payment.customer_cpf_cnpj,
-                "phone": payment.customer_phone,
+                "name": payment.credit_card_holder_info.name,
+                "email": payment.credit_card_holder_info.email,
+                "cpfCnpj": payment.credit_card_holder_info.cpf_cnpj,
+                "postalCode": payment.credit_card_holder_info.postal_code,
+                "addressNumber": payment.credit_card_holder_info.address_number,
+                "addressComplement": payment.credit_card_holder_info.address_complement,
+                "phone": payment.credit_card_holder_info.phone,
+                "mobilePhone": payment.credit_card_holder_info.mobile_phone,
             }
 
         with httpx.Client() as client:

@@ -26,6 +26,7 @@ class User(BaseModel):
     cep: str
     address: str
     number: str
+    complement: Optional[str] = None
     neighborhood: str
     city: str
     state: str
@@ -39,14 +40,22 @@ def create_user(user: User):
     cursor = conn.cursor()
     try:
         hashed = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
-        cursor.execute("""INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number, 
-                         neighborhood, city, state, country_code, username, password) 
+        cursor.execute("""INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number,
+                         neighborhood, city, state, country_code, username, password)
                          VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                       (user.name, user.email, user.phone, user.cpf, user.birth_date, user.cep,
                        user.address, user.number, user.neighborhood, user.city, user.state,
                        user.country_code, user.username, hashed))
+        user_id = cursor.lastrowid
+
+        cursor.execute("""INSERT INTO user_addresses (id_user, cep, address, number, complement,
+                         neighborhood, city, state, is_primary)
+                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,1)""",
+                      (user_id, user.cep, user.address, user.number, user.complement,
+                       user.neighborhood, user.city, user.state))
+
         conn.commit()
-        return {"id": cursor.lastrowid, "status": "success"}
+        return {"id": user_id, "status": "success"}
     except Exception as e:
         conn.rollback()
         raise HTTPException(400, str(e))
@@ -60,10 +69,14 @@ def get_user(user_id: int):
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE id_user=%s", (user_id,))
     user = cursor.fetchone()
+    if not user:
+        cursor.close()
+        conn.close()
+        raise HTTPException(404, "User not found")
+    cursor.execute("SELECT * FROM user_addresses WHERE id_user=%s ORDER BY is_primary DESC", (user_id,))
+    user["addresses"] = cursor.fetchall()
     cursor.close()
     conn.close()
-    if not user:
-        raise HTTPException(404, "User not found")
     return user
 
 @app.post("/users/{user_id}/update")
@@ -71,9 +84,13 @@ def update_user(user_id: int, user: User):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("""UPDATE users SET name=%s, email=%s, phone=%s, address=%s, number=%s, 
-                         neighborhood=%s, city=%s, state=%s WHERE id_user=%s""",
+        cursor.execute("""UPDATE users SET name=%s, email=%s, phone=%s, address=%s, number=%s,
+                         neighborhood=%s, city=%s, state=%s, cep=%s WHERE id_user=%s""",
                       (user.name, user.email, user.phone, user.address, user.number,
+                       user.neighborhood, user.city, user.state, user.cep, user_id))
+        cursor.execute("""UPDATE user_addresses SET cep=%s, address=%s, number=%s, complement=%s,
+                         neighborhood=%s, city=%s, state=%s WHERE id_user=%s AND is_primary=1""",
+                      (user.cep, user.address, user.number, user.complement,
                        user.neighborhood, user.city, user.state, user_id))
         conn.commit()
         return {"updated": cursor.rowcount}
