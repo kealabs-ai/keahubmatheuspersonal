@@ -90,18 +90,18 @@ class AsaasCustomer(BaseModel):
 def get_or_create_customer(customer: AsaasCustomer) -> str:
     headers = get_headers()
     with httpx.Client() as client:
-        # Busca customer existente pelo CPF/CNPJ
         res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
-        res.raise_for_status()
+        if res.status_code != 200:
+            raise HTTPException(400, f"Asaas customers GET error {res.status_code}: {res.text}")
         data = res.json()
         if data.get("data"):
             return data["data"][0]["id"]
-        # Cria novo customer
         payload = {"name": customer.name, "email": customer.email, "cpfCnpj": customer.cpf_cnpj}
         if customer.phone:
             payload["mobilePhone"] = customer.phone
         res = client.post(f"{ASAAS_BASE_URL}/customers", headers=headers, json=payload)
-        res.raise_for_status()
+        if res.status_code not in (200, 201):
+            raise HTTPException(400, f"Asaas customers POST error {res.status_code}: {res.text}")
         return res.json()["id"]
 
 @app.post("/asaas/checkout", status_code=200)
@@ -178,7 +178,8 @@ def create_checkout(payment: AsaasPayment, request: Request):
 
         with httpx.Client() as client:
             res = client.post(f"{ASAAS_BASE_URL}/payments", headers=headers, json=payload)
-            res.raise_for_status()
+            if res.status_code not in (200, 201):
+                raise HTTPException(400, f"Asaas payments error {res.status_code}: {res.text}")
             asaas_data = res.json()
 
         asaas_id = asaas_data["id"]
@@ -215,9 +216,9 @@ def create_checkout(payment: AsaasPayment, request: Request):
             "boleto_url": boleto_url,
             "invoice_url": invoice_url,
         }
-    except httpx.HTTPStatusError as e:
+    except HTTPException:
         conn.rollback()
-        raise HTTPException(400, e.response.text)
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(400, str(e))
