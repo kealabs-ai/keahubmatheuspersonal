@@ -13,6 +13,12 @@ from database import get_db
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"[ERROR] Unhandled exception: {type(exc).__name__}: {exc}", flush=True)
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {str(exc)}"})
+
 ASAAS_BASE_URL = os.getenv("ASAAS_BASE_URL", "https://sandbox.asaas.com/api/v3")
 
 STATUS_MAP = {
@@ -102,7 +108,9 @@ class AsaasCustomer(BaseModel):
 def get_or_create_customer(customer: AsaasCustomer) -> str:
     headers = get_headers()
     with httpx.Client() as client:
+        print(f"[ASAAS] GET /customers headers={headers} params={{cpfCnpj: {customer.cpf_cnpj}}}", flush=True)
         res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
+        print(f"[ASAAS] GET /customers status={res.status_code} body={res.text}", flush=True)
         if res.status_code != 200:
             raise HTTPException(400, f"Asaas customers GET error {res.status_code}: {res.text}")
         data = res.json()
@@ -111,7 +119,9 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
         payload = {"name": customer.name, "email": customer.email, "cpfCnpj": customer.cpf_cnpj}
         if customer.phone:
             payload["mobilePhone"] = customer.phone
+        print(f"[ASAAS] POST /customers headers={headers} body={payload}", flush=True)
         res = client.post(f"{ASAAS_BASE_URL}/customers", headers=headers, json=payload)
+        print(f"[ASAAS] POST /customers status={res.status_code} body={res.text}", flush=True)
         if res.status_code not in (200, 201):
             raise HTTPException(400, f"Asaas customers POST error {res.status_code}: {res.text}")
         return res.json()["id"]
@@ -120,12 +130,12 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
 def create_checkout(payment: AsaasPayment, request: Request):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    headers = get_headers()
     try:
         # Buscar endereço do usuário no banco se não enviado
         postal_code = payment.postal_code
         address_number = payment.address_number
         address_complement = payment.address_complement
+        headers = get_headers()
         if not postal_code or not address_number:
             cursor.execute("SELECT cep, number, complement FROM user_addresses WHERE id_user=%s AND is_primary=1", (payment.id_user,))
             addr = cursor.fetchone()
@@ -188,8 +198,10 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 "mobilePhone": payment.customer_phone,
             }
 
+        print(f"[ASAAS] POST /payments headers={headers} body={payload}", flush=True)
         with httpx.Client() as client:
             res = client.post(f"{ASAAS_BASE_URL}/payments", headers=headers, json=payload)
+            print(f"[ASAAS] POST /payments status={res.status_code} body={res.text}", flush=True)
             if res.status_code not in (200, 201):
                 raise HTTPException(400, f"Asaas payments error {res.status_code}: {res.text}")
             asaas_data = res.json()
