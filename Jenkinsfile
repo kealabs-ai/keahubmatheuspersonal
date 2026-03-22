@@ -16,7 +16,6 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                withCredentials([string(credentialsId: 'asaas-api-key', variable: 'ASAAS_API_KEY')]) {
                 sh '''
                     set -e
 
@@ -48,7 +47,7 @@ DB_USER=u549746795_matheusmp
 DB_PASSWORD=MP@2026!Passos
 DB_ROOT_PASSWORD=rootpassword
 JWT_SECRET=your-secret-key-change-in-production
-ASAAS_API_KEY=${ASAAS_API_KEY}
+ASAAS_API_KEY=$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgxOTBhMmNhLWE4MjItNDVhZS04MTk0LTVmN2JiYjdkMTU3NDo6JGFhY2hfNzMwZDI5ODctMzExYi00ZWNlLWI2YjAtODA5MWEwYzA0OTZh
 ASAAS_BASE_URL=https://sandbox.asaas.com/api/v3
 ENVEOF
 
@@ -86,7 +85,6 @@ ENVEOF
                     $DOCKER stack deploy -c docker-compose.yml matheuspersonal --with-registry-auth
                     $DOCKER stack ps matheuspersonal
                 '''
-                }
             }
         }
     }
