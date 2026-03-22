@@ -151,6 +151,9 @@ def create_checkout(payment: AsaasPayment, request: Request):
             cpf_cnpj=payment.customer_cpf_cnpj,
             phone=payment.customer_phone,
         ))
+        print(f"[ASAAS] customer_id resolvido: {customer_id}", flush=True)
+        if not customer_id:
+            raise HTTPException(400, "Falha ao criar/buscar customer no Asaas")
 
         due_date = payment.due_date or datetime.date.today().isoformat()
         remote_ip = payment.remote_ip or request.client.host
