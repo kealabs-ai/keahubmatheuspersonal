@@ -183,6 +183,16 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 payload["installmentCount"] = payment.installments
                 payload["installmentValue"] = round(float(payment.amount) / payment.installments, 2)
 
+            # Buscar telefone do usuário no banco se não enviado
+            mobile_phone = payment.customer_phone
+            if not mobile_phone:
+                cursor.execute("SELECT phone FROM users WHERE id_user=%s", (payment.id_user,))
+                user_row = cursor.fetchone()
+                if user_row:
+                    mobile_phone = user_row["phone"]
+            if not mobile_phone:
+                raise HTTPException(400, "Telefone do titular do cartão é obrigatório")
+
             payload["creditCard"] = {
                 "holderName": payment.card_name,
                 "number": payment.card_number,
@@ -197,8 +207,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 "postalCode": postal_code,
                 "addressNumber": address_number,
                 "addressComplement": address_complement,
-                "phone": payment.customer_phone,
-                "mobilePhone": payment.customer_phone,
+                "mobilePhone": mobile_phone,
             }
 
         print(f"[ASAAS] POST /payments headers={headers} body={payload}", flush=True)
