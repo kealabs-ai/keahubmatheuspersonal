@@ -16,6 +16,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
+                withCredentials([string(credentialsId: 'asaas-api-key', variable: 'ASAAS_API_KEY')]) {
                 sh '''
                     set -e
 
@@ -39,7 +40,7 @@ pipeline {
                         git clone -b $GIT_BRANCH $GIT_REPO .
                     fi
 
-                    cat > .env << 'ENVEOF'
+                    cat > .env << ENVEOF
 DB_HOST=srv1078.hstgr.io
 DB_PORT=3306
 DB_NAME=u549746795_mp
@@ -47,8 +48,8 @@ DB_USER=u549746795_matheusmp
 DB_PASSWORD=MP@2026!Passos
 DB_ROOT_PASSWORD=rootpassword
 JWT_SECRET=your-secret-key-change-in-production
-ASSAS_API_KEY=${ASAAS_API_KEY}
-ASSAS_BASE_URL=https://api.asaas.com/v3
+ASAAS_API_KEY=${ASAAS_API_KEY}
+ASAAS_BASE_URL=https://sandbox.asaas.com/api/v3
 ENVEOF
 
                     for service in services/*/; do
@@ -85,6 +86,7 @@ ENVEOF
                     $DOCKER stack deploy -c docker-compose.yml matheuspersonal --with-registry-auth
                     $DOCKER stack ps matheuspersonal
                 '''
+                }
             }
         }
     }
