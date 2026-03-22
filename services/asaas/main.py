@@ -81,6 +81,29 @@ class AsaasPayment(BaseModel):
     address_number: Optional[str] = None
     address_complement: Optional[str] = None
 
+class AsaasCustomer(BaseModel):
+    name: str
+    email: str
+    cpf_cnpj: str
+    phone: Optional[str] = None
+
+def get_or_create_customer(customer: AsaasCustomer) -> str:
+    headers = get_headers()
+    with httpx.Client() as client:
+        # Busca customer existente pelo CPF/CNPJ
+        res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
+        res.raise_for_status()
+        data = res.json()
+        if data.get("data"):
+            return data["data"][0]["id"]
+        # Cria novo customer
+        payload = {"name": customer.name, "email": customer.email, "cpfCnpj": customer.cpf_cnpj}
+        if customer.phone:
+            payload["mobilePhone"] = customer.phone
+        res = client.post(f"{ASAAS_BASE_URL}/customers", headers=headers, json=payload)
+        res.raise_for_status()
+        return res.json()["id"]
+
 @app.post("/asaas/checkout", status_code=200)
 def create_checkout(payment: AsaasPayment, request: Request):
     conn = get_db()
