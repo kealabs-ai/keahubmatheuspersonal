@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional
 import sys
 sys.path.append('..')
 from database import get_db
@@ -36,13 +35,10 @@ def create_feedback(feedback: Feedback):
         conn.close()
 
 @app.get("/feedbacks")
-def list_feedbacks(status: Optional[str] = None):
+def list_feedbacks():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    if status:
-        cursor.execute("SELECT * FROM feedbacks WHERE status=%s ORDER BY created_at DESC", (status,))
-    else:
-        cursor.execute("SELECT * FROM feedbacks ORDER BY created_at DESC")
+    cursor.execute("SELECT * FROM feedbacks WHERE status='approved' ORDER BY created_at DESC")
     feedbacks = cursor.fetchall()
     cursor.close()
     conn.close()
