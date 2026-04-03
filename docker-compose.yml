@@ -236,8 +236,8 @@ services:
       - "traefik.http.routers.mp-ms-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/users`)"
       - "traefik.http.routers.mp-ms-users.entrypoints=https"
       - "traefik.http.routers.mp-ms-users.tls=true"
-      - "traefik.http.middlewares.mp-strip-ms-users.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.routers.mp-ms-users.middlewares=mp-strip-ms-users,mp-cors"
+      - "traefik.http.middlewares.mp-strip-aluno.stripprefix.prefixes=/api/aluno"
+      - "traefik.http.routers.mp-ms-users.middlewares=mp-strip-aluno,mp-cors"
       - "traefik.http.services.mp-ms-users.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
@@ -260,8 +260,7 @@ services:
       - "traefik.http.routers.mp-ms-workouts.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/workouts`)"
       - "traefik.http.routers.mp-ms-workouts.entrypoints=https"
       - "traefik.http.routers.mp-ms-workouts.tls=true"
-      - "traefik.http.middlewares.mp-strip-ms-workouts.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.routers.mp-ms-workouts.middlewares=mp-strip-ms-workouts,mp-cors"
+      - "traefik.http.routers.mp-ms-workouts.middlewares=mp-strip-aluno,mp-cors"
       - "traefik.http.services.mp-ms-workouts.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
@@ -284,8 +283,7 @@ services:
       - "traefik.http.routers.mp-ms-progress.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/progress`)"
       - "traefik.http.routers.mp-ms-progress.entrypoints=https"
       - "traefik.http.routers.mp-ms-progress.tls=true"
-      - "traefik.http.middlewares.mp-strip-ms-progress.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.routers.mp-ms-progress.middlewares=mp-strip-ms-progress,mp-cors"
+      - "traefik.http.routers.mp-ms-progress.middlewares=mp-strip-aluno,mp-cors"
       - "traefik.http.services.mp-ms-progress.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
@@ -308,8 +306,7 @@ services:
       - "traefik.http.routers.mp-ms-nutrition.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/nutrition`)"
       - "traefik.http.routers.mp-ms-nutrition.entrypoints=https"
       - "traefik.http.routers.mp-ms-nutrition.tls=true"
-      - "traefik.http.middlewares.mp-strip-ms-nutrition.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.routers.mp-ms-nutrition.middlewares=mp-strip-ms-nutrition,mp-cors"
+      - "traefik.http.routers.mp-ms-nutrition.middlewares=mp-strip-aluno,mp-cors"
       - "traefik.http.services.mp-ms-nutrition.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
@@ -332,8 +329,7 @@ services:
       - "traefik.http.routers.mp-ms-notifications.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/notifications`)"
       - "traefik.http.routers.mp-ms-notifications.entrypoints=https"
       - "traefik.http.routers.mp-ms-notifications.tls=true"
-      - "traefik.http.middlewares.mp-strip-ms-notifications.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.routers.mp-ms-notifications.middlewares=mp-strip-ms-notifications,mp-cors"
+      - "traefik.http.routers.mp-ms-notifications.middlewares=mp-strip-aluno,mp-cors"
       - "traefik.http.services.mp-ms-notifications.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
@@ -356,8 +352,7 @@ services:
       - "traefik.http.routers.mp-ms-dashboard.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/dashboard`)"
       - "traefik.http.routers.mp-ms-dashboard.entrypoints=https"
       - "traefik.http.routers.mp-ms-dashboard.tls=true"
-      - "traefik.http.middlewares.mp-strip-ms-dashboard.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.routers.mp-ms-dashboard.middlewares=mp-strip-ms-dashboard,mp-cors"
+      - "traefik.http.routers.mp-ms-dashboard.middlewares=mp-strip-aluno,mp-cors"
       - "traefik.http.services.mp-ms-dashboard.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
