@@ -198,6 +198,174 @@ services:
     networks:
       - easypanel
 
+  ms-auth-service:
+    image: matheuspersonal/ms-auth:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-auth.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/auth`)"
+      - "traefik.http.routers.mp-ms-auth.entrypoints=https"
+      - "traefik.http.routers.mp-ms-auth.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-auth.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-auth.middlewares=mp-strip-ms-auth,mp-cors"
+      - "traefik.http.services.mp-ms-auth.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
+  ms-users-service:
+    image: matheuspersonal/ms-users:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/users/me`)"
+      - "traefik.http.routers.mp-ms-users.entrypoints=https"
+      - "traefik.http.routers.mp-ms-users.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-users.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-users.middlewares=mp-strip-ms-users,mp-cors"
+      - "traefik.http.services.mp-ms-users.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
+  ms-workouts-service:
+    image: matheuspersonal/ms-workouts:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-workouts.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/workouts`)"
+      - "traefik.http.routers.mp-ms-workouts.entrypoints=https"
+      - "traefik.http.routers.mp-ms-workouts.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-workouts.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-workouts.middlewares=mp-strip-ms-workouts,mp-cors"
+      - "traefik.http.services.mp-ms-workouts.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
+  ms-progress-service:
+    image: matheuspersonal/ms-progress:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-progress.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/progress`)"
+      - "traefik.http.routers.mp-ms-progress.entrypoints=https"
+      - "traefik.http.routers.mp-ms-progress.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-progress.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-progress.middlewares=mp-strip-ms-progress,mp-cors"
+      - "traefik.http.services.mp-ms-progress.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
+  ms-nutrition-service:
+    image: matheuspersonal/ms-nutrition:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-nutrition.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/nutrition`)"
+      - "traefik.http.routers.mp-ms-nutrition.entrypoints=https"
+      - "traefik.http.routers.mp-ms-nutrition.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-nutrition.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-nutrition.middlewares=mp-strip-ms-nutrition,mp-cors"
+      - "traefik.http.services.mp-ms-nutrition.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
+  ms-notifications-service:
+    image: matheuspersonal/ms-notifications:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-notifications.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/notifications`)"
+      - "traefik.http.routers.mp-ms-notifications.entrypoints=https"
+      - "traefik.http.routers.mp-ms-notifications.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-notifications.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-notifications.middlewares=mp-strip-ms-notifications,mp-cors"
+      - "traefik.http.services.mp-ms-notifications.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
+  ms-dashboard-service:
+    image: matheuspersonal/ms-dashboard:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-dashboard.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/dashboard`)"
+      - "traefik.http.routers.mp-ms-dashboard.entrypoints=https"
+      - "traefik.http.routers.mp-ms-dashboard.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-dashboard.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-dashboard.middlewares=mp-strip-ms-dashboard,mp-cors"
+      - "traefik.http.services.mp-ms-dashboard.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
 networks:
   easypanel:
     external: true
