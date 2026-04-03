@@ -68,7 +68,7 @@ def get_me(authorization: str = Header(...)):
     return user
 
 
-@app.put("/users/me")
+@app.post("/users/me/update")
 def update_me(body: UpdateProfile, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
@@ -84,7 +84,7 @@ def update_me(body: UpdateProfile, authorization: str = Header(...)):
     return {"message": "Perfil atualizado com sucesso."}
 
 
-@app.put("/users/me/password")
+@app.post("/users/me/password")
 def change_password(body: ChangePassword, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()

@@ -30,7 +30,7 @@ def list_notifications(authorization: str = Header(...)):
     cursor.close(); conn.close()
     return {"unread_count": unread, "notifications": notifications}
 
-@app.put("/notifications/{notification_id}/read")
+@app.post("/notifications/{notification_id}/read")
 def mark_read(notification_id: int, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
@@ -41,7 +41,7 @@ def mark_read(notification_id: int, authorization: str = Header(...)):
     cursor.close(); conn.close()
     return {"message": "Notificação marcada como lida."}
 
-@app.put("/notifications/read-all")
+@app.post("/notifications/read-all")
 def mark_all_read(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()

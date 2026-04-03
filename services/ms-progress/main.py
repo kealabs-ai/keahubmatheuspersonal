@@ -140,7 +140,7 @@ def add_photo(body: PhotoInput, authorization: str = Header(...)):
     return {"id": photo_id, "message": "Foto adicionada com sucesso."}
 
 
-@app.delete("/progress/photos/{photo_id}")
+@app.post("/progress/photos/{photo_id}/delete")
 def delete_photo(photo_id: int, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()

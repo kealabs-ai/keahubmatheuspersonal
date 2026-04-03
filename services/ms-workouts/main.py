@@ -108,7 +108,7 @@ def start_log(body: StartLog, authorization: str = Header(...)):
     cursor.close(); conn.close()
     return {"log_id": log_id, "started_at": started_at.isoformat() + "Z"}
 
-@app.put("/workouts/logs/{log_id}")
+@app.post("/workouts/logs/{log_id}/finish")
 def finish_log(log_id: int, body: FinishLog, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()

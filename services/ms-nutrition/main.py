@@ -121,7 +121,7 @@ def log_meal(body: MealLogInput, authorization: str = Header(...)):
     return {"message": "Refeição marcada como consumida."}
 
 
-@app.delete("/nutrition/logs/{meal_id}")
+@app.post("/nutrition/logs/{meal_id}/delete")
 def unlog_meal(meal_id: int, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
