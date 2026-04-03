@@ -64,14 +64,21 @@ ENVEOF
                     fi
 
                     # Build das imagens com tags explícitas
-                    $DOCKER build -t matheuspersonal/users:latest       -f services/users/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/subscriptions:latest -f services/subscriptions/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/orders:latest      -f services/orders/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/payments:latest    -f services/payments/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/coupons:latest     -f services/coupons/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/leads:latest       -f services/leads/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/feedbacks:latest   -f services/feedbacks/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/asaas:latest        -f services/asaas/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/users:latest         -f services/users/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/subscriptions:latest  -f services/subscriptions/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/orders:latest         -f services/orders/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/payments:latest       -f services/payments/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/coupons:latest        -f services/coupons/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/leads:latest          -f services/leads/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/feedbacks:latest      -f services/feedbacks/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/asaas:latest          -f services/asaas/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-auth:latest        -f services/ms-auth/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-users:latest       -f services/ms-users/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-workouts:latest    -f services/ms-workouts/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-progress:latest    -f services/ms-progress/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-nutrition:latest   -f services/ms-nutrition/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-notifications:latest -f services/ms-notifications/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-dashboard:latest   -f services/ms-dashboard/Dockerfile services/
 
                     $DOCKER stack rm matheuspersonal || true
                     sleep 30
