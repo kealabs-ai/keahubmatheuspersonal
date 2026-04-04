@@ -89,13 +89,13 @@ def change_password(body: ChangePassword, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT password_hash FROM users WHERE id_user=%s", (user_id,))
+    cursor.execute("SELECT password FROM users WHERE id_user=%s", (user_id,))
     user = cursor.fetchone()
-    if not bcrypt.checkpw(body.current_password.encode(), user["password_hash"].encode()):
+    if not bcrypt.checkpw(body.current_password.encode(), user["password"].encode()):
         cursor.close(); conn.close()
         raise HTTPException(400, "Senha atual incorreta")
     hashed = bcrypt.hashpw(body.new_password.encode(), bcrypt.gensalt()).decode()
-    cursor.execute("UPDATE users SET password_hash=%s WHERE id_user=%s", (hashed, user_id))
+    cursor.execute("UPDATE users SET password=%s WHERE id_user=%s", (hashed, user_id))
     conn.commit()
     cursor.close(); conn.close()
     return {"message": "Senha alterada com sucesso."}
