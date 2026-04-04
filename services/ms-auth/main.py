@@ -39,7 +39,7 @@ def login(body: LoginRequest):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id, name, email, password_hash, plan, role, active FROM users WHERE email=%s",
+        "SELECT id_user as id, name, email, password_hash, plan, role, active FROM users WHERE email=%s",
         (body.email,)
     )
     user = cursor.fetchone()
@@ -88,7 +88,7 @@ def refresh(body: RefreshRequest):
     if not rt:
         cursor.close(); conn.close()
         raise HTTPException(401, "Refresh token inválido ou expirado")
-    cursor.execute("SELECT id, role FROM users WHERE id=%s", (rt["user_id"],))
+    cursor.execute("SELECT id_user as id, role FROM users WHERE id_user=%s", (rt["user_id"],))
     user = cursor.fetchone()
     access_token = make_token(user["id"], user["role"])
     cursor.close(); conn.close()
@@ -114,7 +114,7 @@ def reset_password(body: ResetRequest):
         cursor.close(); conn.close()
         raise HTTPException(400, "Token inválido ou expirado")
     hashed = bcrypt.hashpw(body.password.encode(), bcrypt.gensalt()).decode()
-    cursor.execute("UPDATE users SET password_hash=%s WHERE id=%s", (hashed, rt["user_id"]))
+    cursor.execute("UPDATE users SET password_hash=%s WHERE id_user=%s", (hashed, rt["user_id"]))
     cursor.execute("DELETE FROM refresh_tokens WHERE token=%s", (body.token,))
     conn.commit()
     cursor.close(); conn.close()

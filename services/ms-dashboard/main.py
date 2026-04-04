@@ -25,7 +25,7 @@ def get_summary(authorization: str = Header(...)):
     cursor = conn.cursor(dictionary=True)
 
     # User info
-    cursor.execute("SELECT name, plan, plan_renewal FROM users WHERE id=%s", (user_id,))
+    cursor.execute("SELECT name, plan, plan_renewal FROM users WHERE id_user=%s", (user_id,))
     user = cursor.fetchone()
     if not user:
         cursor.close(); conn.close()

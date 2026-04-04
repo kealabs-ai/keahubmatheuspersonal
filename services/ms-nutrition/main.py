@@ -35,7 +35,7 @@ def get_active_plan(authorization: str = Header(...)):
         """SELECT np.*, u.name as nutritionist_name, n.crn
            FROM nutrition_plans np
            JOIN nutritionists n ON n.id = np.nutritionist_id
-           JOIN users u ON u.id = n.user_id
+           JOIN users u ON u.id_user = n.user_id
            WHERE np.user_id=%s AND np.active=1
            ORDER BY np.created_at DESC LIMIT 1""",
         (user_id,)
@@ -144,7 +144,7 @@ def get_note(authorization: str = Header(...)):
         """SELECT nn.id, u.name as nutritionist, n.crn, nn.message, nn.updated_at
            FROM nutritionist_notes nn
            JOIN nutritionists n ON n.id = nn.nutritionist_id
-           JOIN users u ON u.id = n.user_id
+           JOIN users u ON u.id_user = n.user_id
            WHERE nn.user_id=%s ORDER BY nn.updated_at DESC LIMIT 1""",
         (user_id,)
     )
@@ -164,7 +164,7 @@ def get_history(authorization: str = Header(...)):
         """SELECT np.id, np.name, np.valid_from, np.valid_until, np.active, u.name as nutritionist
            FROM nutrition_plans np
            JOIN nutritionists n ON n.id = np.nutritionist_id
-           JOIN users u ON u.id = n.user_id
+           JOIN users u ON u.id_user = n.user_id
            WHERE np.user_id=%s ORDER BY np.created_at DESC""",
         (user_id,)
     )
