@@ -78,7 +78,43 @@ def activate(req: OnboardingRequest):
                 (req.id_user, req.id_order)
             )
 
-        # 4. Notificação de boas-vindas (apenas uma vez por usuário)
+        # 4. Plano de treino inicial — apenas para alunos novos, sem duplicar
+        cursor.execute(
+            "SELECT id FROM workout_plans WHERE user_id=%s LIMIT 1",
+            (req.id_user,)
+        )
+        if not cursor.fetchone():
+            # Buscar o primeiro usuário com role trainer/admin como personal padrão
+            cursor.execute(
+                "SELECT id_user FROM users WHERE role IN ('trainer','admin') AND active=1 ORDER BY id_user LIMIT 1"
+            )
+            trainer_row = cursor.fetchone()
+            trainer_id = trainer_row["id_user"] if trainer_row else req.id_user
+
+            cursor.execute(
+                """INSERT INTO workout_plans (user_id, trainer_id, name, week_start, active)
+                   VALUES (%s, %s, 'Plano Inicial', %s, 1)""",
+                (req.id_user, trainer_id, today)
+            )
+            plan_id = cursor.lastrowid
+
+            # Semana padrão: 3 treinos + 4 descansos
+            default_week = [
+                (1, "Peito + Tríceps",   50, 0, 1),
+                (2, "Descanso",           0, 1, 2),
+                (3, "Costas + Bíceps",   50, 0, 3),
+                (4, "Descanso",           0, 1, 4),
+                (5, "Pernas + Ombros",   55, 0, 5),
+                (6, "Descanso",           0, 1, 6),
+                (7, "Descanso",           0, 1, 7),
+            ]
+            cursor.executemany(
+                """INSERT INTO workout_days (plan_id, week_day, name, duration_min, is_rest, sort_order)
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                [(plan_id, wd, name, dur, rest, order) for wd, name, dur, rest, order in default_week]
+            )
+
+        # 5. Notificação de boas-vindas (apenas uma vez por usuário)
         cursor.execute(
             """SELECT id FROM notifications
                WHERE user_id=%s AND type='system' AND title='Bem-vindo ao MatheusPersonal!' LIMIT 1""",
