@@ -30,6 +30,46 @@ class OnboardingRequest(BaseModel):
     plan_frequency: str  # monthly | quarterly | semiannual | annual
 
 
+@app.get("/onboarding/debug/{user_id}")
+def debug_user(user_id: int):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT id_user, name, plan, plan_start, plan_renewal, active, role FROM users WHERE id_user=%s",
+            (user_id,)
+        )
+        user = cursor.fetchone()
+        if not user:
+            raise HTTPException(404, "Usuário não encontrado")
+        cursor.execute(
+            "SELECT id_order, id_user FROM orders WHERE id_user=%s ORDER BY created_at DESC LIMIT 1",
+            (user_id,)
+        )
+        last_order = cursor.fetchone()
+        order_items = []
+        if last_order:
+            cursor.execute(
+                "SELECT plan_name, plan_price, plan_frequency FROM order_items WHERE id_order=%s",
+                (last_order["id_order"],)
+            )
+            order_items = cursor.fetchall()
+        cursor.execute(
+            "SELECT id_subscription, plan_name, status FROM subscriptions WHERE id_user=%s ORDER BY created_at DESC LIMIT 1",
+            (user_id,)
+        )
+        subscription = cursor.fetchone()
+        return {
+            "user": user,
+            "last_order": last_order,
+            "order_items": order_items,
+            "subscription": subscription,
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @app.post("/onboarding/activate", status_code=200)
 def activate(req: OnboardingRequest):
     conn = get_db()
@@ -56,6 +96,8 @@ def activate(req: OnboardingRequest):
             "silver": "PRATA", "gold": "OURO", "diamond": "DIAMANTE",
         }
         plan_enum = PLAN_NAME_MAP.get(req.plan_name.lower().strip(), req.plan_name.upper())
+
+        print(f"[ONBOARDING] user_id={req.id_user} plan_name_received='{req.plan_name}' plan_enum_resolved='{plan_enum}'", flush=True)
 
         # 2. Ativar/atualizar plano no usuário (idempotente)
         cursor.execute(
