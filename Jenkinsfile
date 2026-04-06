@@ -49,6 +49,7 @@ DB_ROOT_PASSWORD=rootpassword
 JWT_SECRET=your-secret-key-change-in-production
 ASAAS_API_KEY=$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgxOTBhMmNhLWE4MjItNDVhZS04MTk0LTVmN2JiYjdkMTU3NDo6JGFhY2hfNzMwZDI5ODctMzExYi00ZWNlLWI2YjAtODA5MWEwYzA0OTZh
 ASAAS_BASE_URL=https://sandbox.asaas.com/api/v3
+ONBOARDING_URL=http://ms-onboarding-service:8000/onboarding/activate
 ENVEOF
 
                     for service in services/*/; do
@@ -78,7 +79,8 @@ ENVEOF
                     $DOCKER build -t matheuspersonal/ms-progress:latest    -f services/ms-progress/Dockerfile services/
                     $DOCKER build -t matheuspersonal/ms-nutrition:latest   -f services/ms-nutrition/Dockerfile services/
                     $DOCKER build -t matheuspersonal/ms-notifications:latest -f services/ms-notifications/Dockerfile services/
-                    $DOCKER build -t matheuspersonal/ms-dashboard:latest   -f services/ms-dashboard/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-dashboard:latest    -f services/ms-dashboard/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-onboarding:latest   -f services/ms-onboarding/Dockerfile services/
 
                     $DOCKER stack rm matheuspersonal || true
                     sleep 30

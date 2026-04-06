@@ -183,6 +183,7 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
       ASAAS_API_KEY: "$$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmQ0YWUyZTU4LTdlNTMtNGU1Yy1iODcyLWE4ZmYyZGUyMjZhODo6JGFhY2hfNjBlMTI0ZmEtOTlhYi00NjlhLTllYjQtNmRjNjZiMjlkNzFi"
       ASAAS_BASE_URL: "https://sandbox.asaas.com/api/v3"
+      ONBOARDING_URL: "http://ms-onboarding-service:8000/onboarding/activate"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-asaas.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/asaas`)"
@@ -354,6 +355,29 @@ services:
       - "traefik.http.routers.mp-ms-dashboard.tls=true"
       - "traefik.http.routers.mp-ms-dashboard.middlewares=mp-strip-aluno,mp-cors"
       - "traefik.http.services.mp-ms-dashboard.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
+  ms-onboarding-service:
+    image: matheuspersonal/ms-onboarding:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-onboarding.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/onboarding`)"
+      - "traefik.http.routers.mp-ms-onboarding.entrypoints=https"
+      - "traefik.http.routers.mp-ms-onboarding.tls=true"
+      - "traefik.http.middlewares.mp-strip-onboarding.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-onboarding.middlewares=mp-strip-onboarding,mp-cors"
+      - "traefik.http.services.mp-ms-onboarding.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
       restart_policy:

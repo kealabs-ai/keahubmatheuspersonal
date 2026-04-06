@@ -7,6 +7,8 @@ import os
 import httpx
 import datetime
 import sys
+
+ONBOARDING_URL = os.getenv("ONBOARDING_URL", "http://ms-onboarding-service:8000/onboarding/activate")
 sys.path.append('..')
 from database import get_db
 
@@ -308,15 +310,40 @@ async def asaas_webhook(request: Request):
         if new_status == "approved":
             cursor.execute("UPDATE payments SET payment_status='approved', paid_at=NOW() WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='approved' WHERE id_order=%s", (order_id,))
+            # Buscar dados do pedido para acionar onboarding
+            cursor.execute(
+                """SELECT o.id_user, oi.plan_name, oi.plan_frequency
+                   FROM orders o JOIN order_items oi ON oi.id_order = o.id_order
+                   WHERE o.id_order=%s LIMIT 1""",
+                (order_id,)
+            )
+            order_row = cursor.fetchone()
         elif new_status == "rejected":
             cursor.execute("UPDATE payments SET payment_status='rejected' WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='rejected' WHERE id_order=%s", (order_id,))
+            order_row = None
         elif new_status == "refunded":
             cursor.execute("UPDATE payments SET payment_status='refunded' WHERE id_payment=%s", (payment_id,))
+            order_row = None
         else:
             cursor.execute("UPDATE payments SET payment_status=%s WHERE id_payment=%s", (new_status, payment_id))
+            order_row = None
 
         conn.commit()
+
+        # Acionar onboarding após commit (fora da transação)
+        if new_status == "approved" and order_row:
+            try:
+                with httpx.Client(timeout=10) as client:
+                    client.post(ONBOARDING_URL, json={
+                        "id_order": order_id,
+                        "id_user": order_row["id_user"],
+                        "plan_name": order_row["plan_name"],
+                        "plan_frequency": order_row["plan_frequency"],
+                    })
+            except Exception:
+                pass  # Onboarding falhou silenciosamente; pode ser reprocessado
+
         return {"success": True, "event": event, "status": new_status}
     except Exception as e:
         return {"success": False, "error": str(e)}
