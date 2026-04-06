@@ -39,7 +39,7 @@ def login(body: LoginRequest):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, password, COALESCE(plan,'BRONZE') as plan, COALESCE(role,'student') as role, COALESCE(active,1) as active FROM users WHERE email=%s",
+        "SELECT id_user as id, name, email, password, plan, COALESCE(role,'student') as role, COALESCE(active,1) as active FROM users WHERE email=%s",
         (body.email,)
     )
     user = cursor.fetchone()

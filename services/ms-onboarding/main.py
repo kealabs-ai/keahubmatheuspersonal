@@ -44,17 +44,25 @@ def activate(req: OnboardingRequest):
         if not user:
             raise HTTPException(404, "Usuário não encontrado")
 
-        is_new_student = not user["plan"] or not user["active"]
+        is_new_student = not user["active"]
         today = date.today()
         months = PLAN_DURATION_MONTHS.get(req.plan_frequency.lower(), 1)
         renewal = today + relativedelta(months=months)
+
+        # Normaliza plan_name para o ENUM do banco: BRONZE | PRATA | OURO | DIAMANTE
+        PLAN_NAME_MAP = {
+            "bronze": "BRONZE", "prata": "PRATA", "ouro": "OURO", "diamante": "DIAMANTE",
+            "plano bronze": "BRONZE", "plano prata": "PRATA", "plano ouro": "OURO", "plano diamante": "DIAMANTE",
+            "silver": "PRATA", "gold": "OURO", "diamond": "DIAMANTE",
+        }
+        plan_enum = PLAN_NAME_MAP.get(req.plan_name.lower().strip(), req.plan_name.upper())
 
         # 2. Ativar/atualizar plano no usuário (idempotente)
         cursor.execute(
             """UPDATE users
                SET plan=%s, plan_start=COALESCE(plan_start, %s), plan_renewal=%s, active=1
                WHERE id_user=%s""",
-            (req.plan_name.upper(), today, renewal, req.id_user)
+            (plan_enum, today, renewal, req.id_user)
         )
 
         # 3. Garantir assinatura ativa — sem duplicar
@@ -132,7 +140,7 @@ def activate(req: OnboardingRequest):
         return {
             "success": True,
             "user_id": req.id_user,
-            "plan": req.plan_name.upper(),
+            "plan": plan_enum,
             "plan_renewal": renewal.isoformat(),
             "is_new_student": is_new_student,
         }
