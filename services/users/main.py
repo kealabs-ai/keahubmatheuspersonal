@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import date
+from dateutil.relativedelta import relativedelta
 from typing import Optional
 import sys
 sys.path.append('..')
@@ -16,6 +17,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+PLAN_DURATION_MONTHS = {
+    "monthly": 1,
+    "quarterly": 3,
+    "semiannual": 6,
+    "annual": 12,
+}
 
 class User(BaseModel):
     name: str
@@ -34,6 +42,7 @@ class User(BaseModel):
     password: str
     country_code: str = '+55'
     plan: Optional[str] = None
+    plan_frequency: Optional[str] = None  # monthly | quarterly | semiannual | annual
     goal: Optional[str] = None
     role: str = 'student'
 
@@ -43,12 +52,23 @@ def create_user(user: User):
     cursor = conn.cursor()
     try:
         hashed = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
-        cursor.execute("""INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number,
-                         neighborhood, city, state, country_code, username, password, plan, goal, role, active)
-                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1)""",
-                      (user.name, user.email, user.phone, user.cpf, user.birth_date, user.cep,
-                       user.address, user.number, user.neighborhood, user.city, user.state,
-                       user.country_code, user.username, hashed, user.plan, user.goal, user.role))
+
+        plan_start = date.today() if user.plan else None
+        plan_renewal = None
+        if plan_start and user.plan_frequency:
+            months = PLAN_DURATION_MONTHS.get(user.plan_frequency.lower(), 1)
+            plan_renewal = plan_start + relativedelta(months=months)
+
+        cursor.execute(
+            """INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number,
+               neighborhood, city, state, country_code, username, password,
+               plan, plan_start, plan_renewal, goal, role, active)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1)""",
+            (user.name, user.email, user.phone, user.cpf, user.birth_date, user.cep,
+             user.address, user.number, user.neighborhood, user.city, user.state,
+             user.country_code, user.username, hashed,
+             user.plan, plan_start, plan_renewal, user.goal, user.role)
+        )
         user_id = cursor.lastrowid
 
         cursor.execute("""INSERT INTO user_addresses (id_user, cep, address, number, complement,
@@ -58,7 +78,13 @@ def create_user(user: User):
                        user.neighborhood, user.city, user.state))
 
         conn.commit()
-        return {"id": user_id, "status": "success"}
+        return {
+            "id": user_id,
+            "status": "success",
+            "plan": user.plan,
+            "plan_start": plan_start.isoformat() if plan_start else None,
+            "plan_renewal": plan_renewal.isoformat() if plan_renewal else None,
+        }
     except Exception as e:
         conn.rollback()
         raise HTTPException(400, str(e))
