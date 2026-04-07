@@ -33,6 +33,9 @@ class User(BaseModel):
     username: str
     password: str
     country_code: str = '+55'
+    plan: Optional[str] = None
+    goal: Optional[str] = None
+    role: str = 'student'
 
 @app.post("/users", status_code=200)
 def create_user(user: User):
@@ -41,11 +44,11 @@ def create_user(user: User):
     try:
         hashed = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
         cursor.execute("""INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number,
-                         neighborhood, city, state, country_code, username, password)
-                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                         neighborhood, city, state, country_code, username, password, plan, goal, role, active)
+                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1)""",
                       (user.name, user.email, user.phone, user.cpf, user.birth_date, user.cep,
                        user.address, user.number, user.neighborhood, user.city, user.state,
-                       user.country_code, user.username, hashed))
+                       user.country_code, user.username, hashed, user.plan, user.goal, user.role))
         user_id = cursor.lastrowid
 
         cursor.execute("""INSERT INTO user_addresses (id_user, cep, address, number, complement,
