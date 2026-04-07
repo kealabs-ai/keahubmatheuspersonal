@@ -19,6 +19,7 @@ services:
       - "traefik.http.middlewares.mp-cors.headers.accesscontrolallowheaders=Content-Type,Authorization"
       - "traefik.http.middlewares.mp-cors.headers.accesscontrolmaxage=1728000"
       - "traefik.http.middlewares.mp-cors.headers.addvaryheader=true"
+      - "traefik.http.middlewares.mp-cors.headers.accesscontrolallowcredentials=false"
       - "traefik.http.routers.mp-users.middlewares=mp-strip-users,mp-cors"
       - "traefik.http.services.mp-users.loadbalancer.server.port=8000"
     deploy:
