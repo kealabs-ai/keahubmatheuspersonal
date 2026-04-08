@@ -8,11 +8,18 @@ sys.path.append('..')
 from database import get_db
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
 
 DAY_OF_WEEK_MAP = {"SEG": 1, "TER": 2, "QUA": 3, "QUI": 4, "SEX": 5, "SAB": 6, "DOM": 7}
+
 
 def get_user_id(authorization: str) -> int:
     try:
@@ -33,7 +40,7 @@ class CreatePlan(BaseModel):
 
 class CreateDay(BaseModel):
     name: str
-    day_of_week: str          # SEG|TER|QUA|QUI|SEX|SAB|DOM
+    day_of_week: str
     duration_min: Optional[int] = None
     is_rest: bool = False
 
@@ -80,15 +87,10 @@ def create_plan(body: CreatePlan, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-
-    # Desativa planos anteriores
     cursor.execute("UPDATE workout_plans SET active=0 WHERE user_id=%s", (user_id,))
-
-    # Busca trainer padrão (primeiro trainer ativo)
     cursor.execute("SELECT id_user FROM users WHERE role='trainer' AND active=1 LIMIT 1")
     trainer = cursor.fetchone()
     trainer_id = trainer["id_user"] if trainer else user_id
-
     cursor.execute(
         "INSERT INTO workout_plans (user_id, trainer_id, name, week_start, active) VALUES (%s,%s,%s,%s,1)",
         (user_id, trainer_id, body.name, date.today())
@@ -104,21 +106,16 @@ def create_day(plan_id: int, body: CreateDay, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-
-    # Valida que o plano pertence ao usuário
     cursor.execute("SELECT id FROM workout_plans WHERE id=%s AND user_id=%s", (plan_id, user_id))
     if not cursor.fetchone():
         cursor.close(); conn.close()
         raise HTTPException(403, "Plano não encontrado ou sem permissão")
-
     week_day = DAY_OF_WEEK_MAP.get(body.day_of_week.upper())
     if not week_day:
         cursor.close(); conn.close()
         raise HTTPException(400, f"day_of_week inválido. Use: {list(DAY_OF_WEEK_MAP.keys())}")
-
     cursor.execute("SELECT COUNT(*) as cnt FROM workout_days WHERE plan_id=%s", (plan_id,))
     sort_order = cursor.fetchone()["cnt"] + 1
-
     cursor.execute(
         "INSERT INTO workout_days (plan_id, week_day, name, duration_min, is_rest, sort_order) VALUES (%s,%s,%s,%s,%s,%s)",
         (plan_id, week_day, body.name, body.duration_min, body.is_rest, sort_order)
@@ -134,8 +131,6 @@ def create_exercise(day_id: int, body: CreateExercise, authorization: str = Head
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-
-    # Valida que o dia pertence a um plano do usuário
     cursor.execute(
         """SELECT wd.id FROM workout_days wd
            JOIN workout_plans wp ON wp.id = wd.plan_id
@@ -145,10 +140,8 @@ def create_exercise(day_id: int, body: CreateExercise, authorization: str = Head
     if not cursor.fetchone():
         cursor.close(); conn.close()
         raise HTTPException(403, "Dia não encontrado ou sem permissão")
-
     cursor.execute("SELECT COUNT(*) as cnt FROM exercises WHERE day_id=%s", (day_id,))
     sort_order = cursor.fetchone()["cnt"] + 1
-
     cursor.execute(
         "INSERT INTO exercises (day_id, name, muscle_group, sets, reps, rest_seconds, video_url, sort_order) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
         (day_id, body.name, body.muscle_group, body.sets, body.reps, body.rest_seconds, body.video_url, sort_order)
@@ -163,7 +156,6 @@ def create_exercise(day_id: int, body: CreateExercise, authorization: str = Head
 
 @app.get("/workouts/plan")
 def get_active_plan(authorization: str = Header(...)):
-def get_active_plan(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -174,7 +166,6 @@ def get_active_plan(authorization: str = Header(...)):
         raise HTTPException(404, "Nenhum plano ativo encontrado")
     cursor.execute("SELECT id, week_day, name, duration_min, is_rest FROM workout_days WHERE plan_id=%s ORDER BY sort_order", (plan["id"],))
     days = cursor.fetchall()
-    # Buscar dias concluídos esta semana
     cursor.execute("""SELECT DISTINCT wd.week_day FROM workout_logs wl
                       JOIN workout_days wd ON wd.id = wl.day_id
                       WHERE wl.user_id=%s AND wl.completed=1
@@ -188,6 +179,7 @@ def get_active_plan(authorization: str = Header(...)):
     plan["days"] = days
     return {"plan": plan}
 
+
 @app.get("/workouts/plan/{plan_id}/days")
 def get_plan_days(plan_id: int, authorization: str = Header(...)):
     get_user_id(authorization)
@@ -197,6 +189,7 @@ def get_plan_days(plan_id: int, authorization: str = Header(...)):
     days = cursor.fetchall()
     cursor.close(); conn.close()
     return {"days": days}
+
 
 @app.get("/workouts/days/{day_id}/exercises")
 def get_day_exercises(day_id: int, authorization: str = Header(...)):
@@ -213,6 +206,7 @@ def get_day_exercises(day_id: int, authorization: str = Header(...)):
     cursor.close(); conn.close()
     return day
 
+
 @app.post("/workouts/logs", status_code=201)
 def start_log(body: StartLog, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
@@ -226,6 +220,7 @@ def start_log(body: StartLog, authorization: str = Header(...)):
     cursor.close(); conn.close()
     return {"log_id": log_id, "started_at": started_at.isoformat() + "Z"}
 
+
 @app.post("/workouts/logs/{log_id}/finish")
 def finish_log(log_id: int, body: FinishLog, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
@@ -237,6 +232,7 @@ def finish_log(log_id: int, body: FinishLog, authorization: str = Header(...)):
     conn.commit()
     cursor.close(); conn.close()
     return {"message": "Treino finalizado com sucesso."}
+
 
 @app.post("/workouts/logs/{log_id}/exercises")
 def log_exercises(log_id: int, body: ExerciseLogsInput, authorization: str = Header(...)):
@@ -253,6 +249,7 @@ def log_exercises(log_id: int, body: ExerciseLogsInput, authorization: str = Hea
     cursor.close(); conn.close()
     return {"message": "Exercícios registrados com sucesso."}
 
+
 @app.get("/workouts/logs/history")
 def get_history(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
@@ -264,6 +261,7 @@ def get_history(authorization: str = Header(...)):
     logs = cursor.fetchall()
     cursor.close(); conn.close()
     return {"history": logs}
+
 
 @app.get("/workouts/streak")
 def get_streak(authorization: str = Header(...)):
@@ -283,7 +281,6 @@ def get_streak(authorization: str = Header(...)):
     days_active_row = cursor.fetchone()
     cursor.close(); conn.close()
 
-    # Calcular streak atual
     streak = 0
     prev = None
     for r in rows:
