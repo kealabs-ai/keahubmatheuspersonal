@@ -12,6 +12,8 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
 
+DAY_OF_WEEK_MAP = {"SEG": 1, "TER": 2, "QUA": 3, "QUI": 4, "SEX": 5, "SAB": 6, "DOM": 7}
+
 def get_user_id(authorization: str) -> int:
     try:
         token = authorization.split(" ")[1]
@@ -19,6 +21,29 @@ def get_user_id(authorization: str) -> int:
         return payload["sub"]
     except Exception:
         raise HTTPException(401, "Token inválido")
+
+
+# ── Models ──────────────────────────────────────────────
+
+class CreatePlan(BaseModel):
+    name: str
+    description: Optional[str] = None
+    goal: Optional[str] = None
+    gender: Optional[str] = None
+
+class CreateDay(BaseModel):
+    name: str
+    day_of_week: str          # SEG|TER|QUA|QUI|SEX|SAB|DOM
+    duration_min: Optional[int] = None
+    is_rest: bool = False
+
+class CreateExercise(BaseModel):
+    name: str
+    sets: Optional[int] = None
+    reps: Optional[str] = None
+    rest_seconds: Optional[int] = None
+    muscle_group: Optional[str] = None
+    video_url: Optional[str] = None
 
 class StartLog(BaseModel):
     day_id: int
@@ -36,15 +61,108 @@ class ExerciseLogItem(BaseModel):
 class ExerciseLogsInput(BaseModel):
     exercises: List[ExerciseLogItem]
 
+
+# ── Helpers ─────────────────────────────────────────────
+
 def day_status(week_day: int, completed_days: set) -> str:
-    today_weekday = date.today().isoweekday()  # 1=Mon...7=Sun
+    today_weekday = date.today().isoweekday()
     if week_day in completed_days:
         return "done"
     if week_day == today_weekday:
         return "today"
     return "pending"
 
+
+# ── Onboarding ──────────────────────────────────────────
+
+@app.post("/workouts/plans", status_code=201)
+def create_plan(body: CreatePlan, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    # Desativa planos anteriores
+    cursor.execute("UPDATE workout_plans SET active=0 WHERE user_id=%s", (user_id,))
+
+    # Busca trainer padrão (primeiro trainer ativo)
+    cursor.execute("SELECT id_user FROM users WHERE role='trainer' AND active=1 LIMIT 1")
+    trainer = cursor.fetchone()
+    trainer_id = trainer["id_user"] if trainer else user_id
+
+    cursor.execute(
+        "INSERT INTO workout_plans (user_id, trainer_id, name, week_start, active) VALUES (%s,%s,%s,%s,1)",
+        (user_id, trainer_id, body.name, date.today())
+    )
+    conn.commit()
+    plan_id = cursor.lastrowid
+    cursor.close(); conn.close()
+    return {"plan_id": plan_id}
+
+
+@app.post("/workouts/plans/{plan_id}/days", status_code=201)
+def create_day(plan_id: int, body: CreateDay, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    # Valida que o plano pertence ao usuário
+    cursor.execute("SELECT id FROM workout_plans WHERE id=%s AND user_id=%s", (plan_id, user_id))
+    if not cursor.fetchone():
+        cursor.close(); conn.close()
+        raise HTTPException(403, "Plano não encontrado ou sem permissão")
+
+    week_day = DAY_OF_WEEK_MAP.get(body.day_of_week.upper())
+    if not week_day:
+        cursor.close(); conn.close()
+        raise HTTPException(400, f"day_of_week inválido. Use: {list(DAY_OF_WEEK_MAP.keys())}")
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM workout_days WHERE plan_id=%s", (plan_id,))
+    sort_order = cursor.fetchone()["cnt"] + 1
+
+    cursor.execute(
+        "INSERT INTO workout_days (plan_id, week_day, name, duration_min, is_rest, sort_order) VALUES (%s,%s,%s,%s,%s,%s)",
+        (plan_id, week_day, body.name, body.duration_min, body.is_rest, sort_order)
+    )
+    conn.commit()
+    day_id = cursor.lastrowid
+    cursor.close(); conn.close()
+    return {"day_id": day_id}
+
+
+@app.post("/workouts/days/{day_id}/exercises", status_code=201)
+def create_exercise(day_id: int, body: CreateExercise, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    # Valida que o dia pertence a um plano do usuário
+    cursor.execute(
+        """SELECT wd.id FROM workout_days wd
+           JOIN workout_plans wp ON wp.id = wd.plan_id
+           WHERE wd.id=%s AND wp.user_id=%s""",
+        (day_id, user_id)
+    )
+    if not cursor.fetchone():
+        cursor.close(); conn.close()
+        raise HTTPException(403, "Dia não encontrado ou sem permissão")
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM exercises WHERE day_id=%s", (day_id,))
+    sort_order = cursor.fetchone()["cnt"] + 1
+
+    cursor.execute(
+        "INSERT INTO exercises (day_id, name, muscle_group, sets, reps, rest_seconds, video_url, sort_order) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        (day_id, body.name, body.muscle_group, body.sets, body.reps, body.rest_seconds, body.video_url, sort_order)
+    )
+    conn.commit()
+    exercise_id = cursor.lastrowid
+    cursor.close(); conn.close()
+    return {"exercise_id": exercise_id}
+
+
+# ── Consultas ────────────────────────────────────────────
+
 @app.get("/workouts/plan")
+def get_active_plan(authorization: str = Header(...)):
 def get_active_plan(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
