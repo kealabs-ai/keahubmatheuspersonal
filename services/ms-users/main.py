@@ -52,7 +52,7 @@ def get_me(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, phone, birthdate, goal, plan, plan_start, plan_renewal, avatar_url FROM users WHERE id_user=%s",
+        "SELECT id_user as id, name, email, phone, birth_date, goal, plan, plan_start, plan_renewal, avatar_url FROM users WHERE id_user=%s",
         (user_id,)
     )
     user = cursor.fetchone()
@@ -73,7 +73,7 @@ def update_me(body: UpdateProfile, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor()
-    fields = {k: v for k, v in body.model_dump().items() if v is not None}
+    fields = {"birth_date" if k == "birthdate" else k: v for k, v in body.model_dump().items() if v is not None}
     if not fields:
         cursor.close(); conn.close()
         return {"message": "Nenhum campo para atualizar"}
