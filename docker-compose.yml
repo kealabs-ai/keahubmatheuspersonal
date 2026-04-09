@@ -20,12 +20,6 @@ services:
       - "traefik.http.middlewares.mp-cors.headers.accesscontrolmaxage=86400"
       - "traefik.http.middlewares.mp-cors.headers.addvaryheader=true"
       - "traefik.http.middlewares.mp-cors.headers.accesscontrolallowcredentials=true"
-      - "traefik.http.routers.mp-users-options.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && Method(`OPTIONS`)"
-      - "traefik.http.routers.mp-users-options.entrypoints=https"
-      - "traefik.http.routers.mp-users-options.tls=true"
-      - "traefik.http.routers.mp-users-options.middlewares=mp-cors"
-      - "traefik.http.routers.mp-users-options.service=noop@internal"
-      - "traefik.http.routers.mp-users-options.priority=100"
       - "traefik.http.routers.mp-users.middlewares=mp-strip-users,mp-cors"
       - "traefik.http.services.mp-users.loadbalancer.server.port=8000"
     deploy:
@@ -397,36 +391,6 @@ services:
         condition: on-failure
     networks:
       - easypanel
-
-  cors-handler:
-    image: nginx:alpine
-    configs:
-      - source: nginx_cors
-        target: /etc/nginx/conf.d/default.conf
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mp-cors-preflight.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && Method(`OPTIONS`)"
-      - "traefik.http.routers.mp-cors-preflight.entrypoints=https"
-      - "traefik.http.routers.mp-cors-preflight.tls=true"
-      - "traefik.http.routers.mp-cors-preflight.middlewares=mp-cors"
-      - "traefik.http.routers.mp-cors-preflight.priority=200"
-      - "traefik.http.services.mp-cors-preflight.loadbalancer.server.port=80"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-    networks:
-      - easypanel
-
-configs:
-  nginx_cors:
-    content: |
-      server {
-        listen 80;
-        location / {
-          return 204;
-        }
-      }
 
 networks:
   easypanel:
