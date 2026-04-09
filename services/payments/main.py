@@ -28,10 +28,14 @@ def require_admin(authorization: str) -> int:
         raise HTTPException(403, "Acesso restrito")
     return user_id
 
-app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+ALLOWED_ORIGINS = [
+    "https://www.matheuspersonal.com.br",
+    "https://matheuspersonal.com.br",
+    "https://srv1023256.hstgr.cloud",
+]
 
-class Payment(BaseModel):
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
     id_order: int
     payment_method: str
     amount: Decimal

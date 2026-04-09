@@ -6,10 +6,14 @@ import sys
 sys.path.append('..')
 from database import get_db
 
-app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+ALLOWED_ORIGINS = [
+    "https://www.matheuspersonal.com.br",
+    "https://matheuspersonal.com.br",
+    "https://srv1023256.hstgr.cloud",
+]
 
-class Lead(BaseModel):
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
     name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None

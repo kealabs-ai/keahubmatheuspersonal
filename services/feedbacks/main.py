@@ -5,8 +5,14 @@ import sys
 sys.path.append('..')
 from database import get_db
 
+ALLOWED_ORIGINS = [
+    "https://www.matheuspersonal.com.br",
+    "https://matheuspersonal.com.br",
+    "https://srv1023256.hstgr.cloud",
+]
+
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 class Feedback(BaseModel):
     name: str

@@ -30,9 +30,16 @@ def require_admin(authorization: str) -> int:
 
 app = FastAPI()
 
+ALLOWED_ORIGINS = [
+    "https://www.matheuspersonal.com.br",
+    "https://matheuspersonal.com.br",
+    "https://srv1023256.hstgr.cloud",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

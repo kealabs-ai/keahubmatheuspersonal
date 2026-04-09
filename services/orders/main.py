@@ -29,8 +29,14 @@ def require_admin(authorization: str) -> int:
         raise HTTPException(403, "Acesso restrito")
     return user_id
 
+ALLOWED_ORIGINS = [
+    "https://www.matheuspersonal.com.br",
+    "https://matheuspersonal.com.br",
+    "https://srv1023256.hstgr.cloud",
+]
+
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
