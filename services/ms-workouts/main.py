@@ -39,9 +39,11 @@ def require_admin(authorization: str) -> int:
         raise HTTPException(401, "Token inválido")
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
-    user = cursor.fetchone()
-    cursor.close(); conn.close()
+    try:
+        cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
+        user = cursor.fetchone()
+    finally:
+        cursor.close(); conn.close()
     if not user or user["role"] not in ("admin", "trainer"):
         raise HTTPException(403, "Acesso restrito")
     return user_id
@@ -58,13 +60,10 @@ class CreatePlan(BaseModel):
 class AdminCreatePlan(BaseModel):
     user_id: int
     name: str
-    description: Optional[str] = None
     goal: Optional[str] = None
-    gender: Optional[str] = None
 
 class UpdatePlan(BaseModel):
     name: Optional[str] = None
-    description: Optional[str] = None
     goal: Optional[str] = None
     active: Optional[bool] = None
 
@@ -203,7 +202,7 @@ def admin_get_all_plans(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT wp.id, wp.user_id, u.name as user_name, wp.name, wp.description,
+        """SELECT wp.id, wp.user_id, u.name as user_name, wp.name,
               wp.goal, wp.active, wp.week_start, wp.created_at
            FROM workout_plans wp
            JOIN users u ON u.id_user = wp.user_id
@@ -221,8 +220,8 @@ def admin_create_plan(body: AdminCreatePlan, authorization: str = Header(...)):
     cursor = conn.cursor()
     cursor.execute("UPDATE workout_plans SET active=0 WHERE user_id=%s", (body.user_id,))
     cursor.execute(
-        "INSERT INTO workout_plans (user_id, trainer_id, name, description, goal, week_start, active) VALUES (%s,%s,%s,%s,%s,%s,1)",
-        (body.user_id, trainer_id, body.name, body.description, body.goal, date.today())
+        "INSERT INTO workout_plans (user_id, trainer_id, name, goal, week_start, active) VALUES (%s,%s,%s,%s,%s,1)",
+        (body.user_id, trainer_id, body.name, body.goal, date.today())
     )
     conn.commit()
     plan_id = cursor.lastrowid
