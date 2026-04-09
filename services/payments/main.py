@@ -111,9 +111,10 @@ def list_all_payments(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT p.*, o.id_user
+        """SELECT p.*, o.id_user, u.name as user_name, u.email as user_email
            FROM payments p
            JOIN orders o ON o.id_order = p.id_order
+           JOIN users u ON u.id_user = o.id_user
            ORDER BY p.id_payment DESC"""
     )
     payments = cursor.fetchall()

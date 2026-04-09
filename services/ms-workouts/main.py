@@ -30,6 +30,23 @@ def get_user_id(authorization: str) -> int:
         raise HTTPException(401, "Token inválido")
 
 
+def require_admin(authorization: str) -> int:
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close(); conn.close()
+    if not user or user["role"] not in ("admin", "trainer"):
+        raise HTTPException(403, "Acesso restrito")
+    return user_id
+
+
 # ── Models ──────────────────────────────────────────────
 
 class CreatePlan(BaseModel):
@@ -37,6 +54,32 @@ class CreatePlan(BaseModel):
     description: Optional[str] = None
     goal: Optional[str] = None
     gender: Optional[str] = None
+
+class AdminCreatePlan(BaseModel):
+    user_id: int
+    name: str
+    description: Optional[str] = None
+    goal: Optional[str] = None
+    gender: Optional[str] = None
+
+class UpdatePlan(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    goal: Optional[str] = None
+    active: Optional[bool] = None
+
+class UpdateDay(BaseModel):
+    name: Optional[str] = None
+    duration_min: Optional[int] = None
+    is_rest: Optional[bool] = None
+
+class UpdateExercise(BaseModel):
+    name: Optional[str] = None
+    sets: Optional[int] = None
+    reps: Optional[str] = None
+    rest_seconds: Optional[int] = None
+    muscle_group: Optional[str] = None
+    video_url: Optional[str] = None
 
 class CreateDay(BaseModel):
     name: str
@@ -152,7 +195,187 @@ def create_exercise(day_id: int, body: CreateExercise, authorization: str = Head
     return {"exercise_id": exercise_id}
 
 
+# ── Admin ────────────────────────────────────────────────
+
+@app.get("/workouts/admin/plans")
+def admin_get_all_plans(authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT wp.id, wp.user_id, u.name as user_name, wp.name, wp.description,
+              wp.goal, wp.active, wp.week_start, wp.created_at
+           FROM workout_plans wp
+           JOIN users u ON u.id_user = wp.user_id
+           ORDER BY wp.created_at DESC"""
+    )
+    plans = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"plans": plans, "total": len(plans)}
+
+
+@app.post("/workouts/admin/plans", status_code=201)
+def admin_create_plan(body: AdminCreatePlan, authorization: str = Header(...)):
+    trainer_id = require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE workout_plans SET active=0 WHERE user_id=%s", (body.user_id,))
+    cursor.execute(
+        "INSERT INTO workout_plans (user_id, trainer_id, name, description, goal, week_start, active) VALUES (%s,%s,%s,%s,%s,%s,1)",
+        (body.user_id, trainer_id, body.name, body.description, body.goal, date.today())
+    )
+    conn.commit()
+    plan_id = cursor.lastrowid
+    cursor.close(); conn.close()
+    return {"plan_id": plan_id}
+
+
+@app.post("/workouts/admin/plans/{plan_id}/update")
+def admin_update_plan(plan_id: int, body: UpdatePlan, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    fields = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not fields:
+        cursor.close(); conn.close()
+        return {"message": "Nenhum campo para atualizar"}
+    set_clause = ", ".join(f"{k}=%s" for k in fields)
+    cursor.execute(f"UPDATE workout_plans SET {set_clause} WHERE id=%s", (*fields.values(), plan_id))
+    conn.commit()
+    cursor.close(); conn.close()
+    return {"message": "Plano atualizado com sucesso."}
+
+
+@app.post("/workouts/admin/plans/{plan_id}/delete")
+def admin_delete_plan(plan_id: int, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM workout_plans WHERE id=%s", (plan_id,))
+    conn.commit()
+    deleted = cursor.rowcount
+    cursor.close(); conn.close()
+    if not deleted:
+        raise HTTPException(404, "Plano não encontrado")
+    return {"message": "Plano removido com sucesso."}
+
+
+@app.post("/workouts/admin/plans/{plan_id}/days", status_code=201)
+def admin_create_day(plan_id: int, body: CreateDay, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    week_day = DAY_OF_WEEK_MAP.get(body.day_of_week.upper())
+    if not week_day:
+        cursor.close(); conn.close()
+        raise HTTPException(400, f"day_of_week inválido. Use: {list(DAY_OF_WEEK_MAP.keys())}")
+    cursor.execute("SELECT COUNT(*) as cnt FROM workout_days WHERE plan_id=%s", (plan_id,))
+    sort_order = cursor.fetchone()["cnt"] + 1
+    cursor.execute(
+        "INSERT INTO workout_days (plan_id, week_day, name, duration_min, is_rest, sort_order) VALUES (%s,%s,%s,%s,%s,%s)",
+        (plan_id, week_day, body.name, body.duration_min, body.is_rest, sort_order)
+    )
+    conn.commit()
+    day_id = cursor.lastrowid
+    cursor.close(); conn.close()
+    return {"day_id": day_id}
+
+
+@app.post("/workouts/admin/days/{day_id}/update")
+def admin_update_day(day_id: int, body: UpdateDay, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    fields = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not fields:
+        cursor.close(); conn.close()
+        return {"message": "Nenhum campo para atualizar"}
+    set_clause = ", ".join(f"{k}=%s" for k in fields)
+    cursor.execute(f"UPDATE workout_days SET {set_clause} WHERE id=%s", (*fields.values(), day_id))
+    conn.commit()
+    cursor.close(); conn.close()
+    return {"message": "Dia atualizado com sucesso."}
+
+
+@app.post("/workouts/admin/days/{day_id}/delete")
+def admin_delete_day(day_id: int, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM workout_days WHERE id=%s", (day_id,))
+    conn.commit()
+    deleted = cursor.rowcount
+    cursor.close(); conn.close()
+    if not deleted:
+        raise HTTPException(404, "Dia não encontrado")
+    return {"message": "Dia removido com sucesso."}
+
+
+@app.post("/workouts/admin/days/{day_id}/exercises", status_code=201)
+def admin_create_exercise(day_id: int, body: CreateExercise, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT COUNT(*) as cnt FROM exercises WHERE day_id=%s", (day_id,))
+    sort_order = cursor.fetchone()["cnt"] + 1
+    cursor.execute(
+        "INSERT INTO exercises (day_id, name, muscle_group, sets, reps, rest_seconds, video_url, sort_order) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        (day_id, body.name, body.muscle_group, body.sets, body.reps, body.rest_seconds, body.video_url, sort_order)
+    )
+    conn.commit()
+    exercise_id = cursor.lastrowid
+    cursor.close(); conn.close()
+    return {"exercise_id": exercise_id}
+
+
+@app.post("/workouts/admin/exercises/{exercise_id}/update")
+def admin_update_exercise(exercise_id: int, body: UpdateExercise, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    fields = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not fields:
+        cursor.close(); conn.close()
+        return {"message": "Nenhum campo para atualizar"}
+    set_clause = ", ".join(f"{k}=%s" for k in fields)
+    cursor.execute(f"UPDATE exercises SET {set_clause} WHERE id=%s", (*fields.values(), exercise_id))
+    conn.commit()
+    cursor.close(); conn.close()
+    return {"message": "Exercício atualizado com sucesso."}
+
+
+@app.post("/workouts/admin/exercises/{exercise_id}/delete")
+def admin_delete_exercise(exercise_id: int, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM exercises WHERE id=%s", (exercise_id,))
+    conn.commit()
+    deleted = cursor.rowcount
+    cursor.close(); conn.close()
+    if not deleted:
+        raise HTTPException(404, "Exercício não encontrado")
+    return {"message": "Exercício removido com sucesso."}
+
+
 # ── Consultas ────────────────────────────────────────────
+
+@app.get("/workouts/exercises/all")
+def get_all_exercises(authorization: str = Header(...)):
+    get_user_id(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT e.id, e.name, e.muscle_group, e.sets, e.reps, e.rest_seconds, e.video_url,
+              wd.name as day_name, wp.name as plan_name, wp.user_id
+           FROM exercises e
+           JOIN workout_days wd ON wd.id = e.day_id
+           JOIN workout_plans wp ON wp.id = wd.plan_id
+           ORDER BY wp.user_id, wd.sort_order, e.sort_order"""
+    )
+    exercises = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"exercises": exercises, "total": len(exercises)}
 
 @app.get("/workouts/plan")
 def get_active_plan(authorization: str = Header(...)):

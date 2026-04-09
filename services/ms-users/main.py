@@ -22,6 +22,23 @@ def get_user_id(authorization: str) -> int:
         raise HTTPException(401, "Token inválido")
 
 
+def require_admin(authorization: str) -> int:
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close(); conn.close()
+    if not user or user["role"] not in ("admin", "trainer"):
+        raise HTTPException(403, "Acesso restrito")
+    return user_id
+
+
 class UpdateProfile(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
@@ -44,6 +61,19 @@ class MetricsInput(BaseModel):
 
 class FeedbackInput(BaseModel):
     message: str
+
+
+@app.get("/users/all")
+def get_all_users(authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id_user as id, name, email, phone, plan, plan_start, plan_renewal, active, role FROM users ORDER BY name"
+    )
+    users = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"users": users, "total": len(users)}
 
 
 @app.get("/users/me")

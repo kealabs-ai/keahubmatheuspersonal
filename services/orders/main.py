@@ -1,14 +1,33 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from decimal import Decimal
 from typing import List, Optional
-import sys
+import sys, os, jwt
 sys.path.append('..')
 from database import get_db
 import uuid
+
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
+
+
+def require_admin(authorization: str) -> int:
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close(); conn.close()
+    if not user or user["role"] not in ("admin", "trainer"):
+        raise HTTPException(403, "Acesso restrito")
+    return user_id
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -89,3 +108,22 @@ def get_user_orders(user_id: int):
     cursor.close()
     conn.close()
     return orders
+
+
+@app.get("/orders")
+def get_all_orders(authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT o.*, u.name as user_name, u.email as user_email
+           FROM orders o
+           JOIN users u ON u.id_user = o.id_user
+           ORDER BY o.created_at DESC"""
+    )
+    orders = cursor.fetchall()
+    for order in orders:
+        cursor.execute("SELECT * FROM order_items WHERE id_order=%s", (order["id_order"],))
+        order["items"] = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"orders": orders, "total": len(orders)}

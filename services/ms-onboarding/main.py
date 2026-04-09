@@ -8,12 +8,7 @@ sys.path.append('..')
 from database import get_db
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://asaas-service:8000"],
-    allow_methods=["POST"],
-    allow_headers=["Content-Type"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 PLAN_DURATION_MONTHS = {
     "monthly": 1,
