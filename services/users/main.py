@@ -1,13 +1,32 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from typing import Optional
-import sys
+import sys, os, jwt
 sys.path.append('..')
 from database import get_db
 import bcrypt
+
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
+
+
+def require_admin(authorization: str) -> int:
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close(); conn.close()
+    if not user or user["role"] not in ("admin", "trainer"):
+        raise HTTPException(403, "Acesso restrito")
+    return user_id
 
 app = FastAPI()
 
@@ -137,3 +156,14 @@ def delete_user(user_id: int):
     cursor.close()
     conn.close()
     return {"deleted": deleted}
+
+@app.get("/users")
+def list_all_users(authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id_user, name, email, phone, cpf, plan, active, role, created_at FROM users ORDER BY id_user DESC")
+    users = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {"users": users, "total": len(users)}

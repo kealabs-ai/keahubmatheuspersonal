@@ -1,13 +1,32 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from decimal import Decimal
 from typing import Optional
 from datetime import datetime
-import sys
+import sys, os, jwt
 sys.path.append('..')
 from database import get_db
 import json
+
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
+
+
+def require_admin(authorization: str) -> int:
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close(); conn.close()
+    if not user or user["role"] not in ("admin", "trainer"):
+        raise HTTPException(403, "Acesso restrito")
+    return user_id
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -85,6 +104,22 @@ def get_order_payments(order_id: int):
     cursor.close()
     conn.close()
     return payments
+
+@app.get("/payments")
+def list_all_payments(authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT p.*, o.id_user
+           FROM payments p
+           JOIN orders o ON o.id_order = p.id_order
+           ORDER BY p.id_payment DESC"""
+    )
+    payments = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {"payments": payments, "total": len(payments)}
 
 # Webhook InfinitePay
 @app.post("/payments/webhook/infinitepay")
