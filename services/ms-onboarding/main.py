@@ -14,7 +14,9 @@ ALLOWED_ORIGINS = [
 ]
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]) = {
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+PLAN_DURATION_MONTHS = {
     "monthly": 1,
     "quarterly": 3,
     "semiannual": 6,
