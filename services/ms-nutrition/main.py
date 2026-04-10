@@ -362,6 +362,17 @@ def admin_delete_meal(meal_id: int, authorization: str = Header(...)):
     return {"message": "Refeição removida com sucesso."}
 
 
+@app.get("/nutrition/admin/meals/{meal_id}/items")
+def admin_get_meal_items(meal_id: int, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM meal_items WHERE meal_id=%s ORDER BY sort_order", (meal_id,))
+    items = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"items": items}
+
+
 @app.post("/nutrition/admin/meals/{meal_id}/items", status_code=201)
 def admin_create_meal_item(meal_id: int, body: MealItemInput, authorization: str = Header(...)):
     require_admin(authorization)
