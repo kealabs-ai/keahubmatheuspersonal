@@ -9,7 +9,9 @@
     { "key": "orders_url",        "value": "https://srv1023256.hstgr.cloud:8443/api/orders" },
     { "key": "payments_url",      "value": "https://srv1023256.hstgr.cloud:8443/api/payments" },
     { "key": "coupons_url",       "value": "https://srv1023256.hstgr.cloud:8443/api/coupons" },
-    { "key": "leads_url",         "value": "https://srv1023256.hstgr.cloud:8443/api/leads" }
+    { "key": "leads_url",         "value": "https://srv1023256.hstgr.cloud:8443/api/leads" },
+    { "key": "nutrition_url",     "value": "https://srv1023256.hstgr.cloud/api/aluno/nutrition" },
+    { "key": "token",             "value": "" }
   ],
   "item": [
     {
@@ -227,6 +229,232 @@
           "request": {
             "method": "GET",
             "url": "{{coupons_url}}/coupons"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nutrição — Admin",
+      "item": [
+        {
+          "name": "[ADMIN] Listar todos os planos",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/plans/all",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Criar plano nutricional",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/plans",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"nutritionist_id\": 1,\n  \"name\": \"Plano Hipertrofia\",\n  \"goal_calories\": 2800,\n  \"goal_protein_g\": 180,\n  \"goal_carbs_g\": 300,\n  \"goal_fat_g\": 70,\n  \"water_goal_ml\": 3000,\n  \"valid_from\": \"2025-01-01\",\n  \"valid_until\": \"2025-12-31\",\n  \"active\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Atualizar plano",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/plans/1/update",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Plano Hipertrofia Atualizado\",\n  \"goal_calories\": 3000,\n  \"active\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Deletar plano",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/plans/1/delete",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Listar refeições do plano",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/plan/1/meals",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Criar refeição",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/plans/1/meals",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Café da manhã\",\n  \"time_label\": \"07:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Atualizar refeição",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/meals/1/update",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Café da manhã\",\n  \"time_label\": \"08:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Deletar refeição",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/meals/1/delete",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Listar itens da refeição",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/admin/meals/1/items",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Criar item da refeição",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/meals/1/items",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Frango Grelhado\",\n  \"quantity_g\": 200,\n  \"calories\": 330,\n  \"protein_g\": 62,\n  \"carbs_g\": 0,\n  \"fat_g\": 7\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Atualizar item",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/items/1/update",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"calories\": 350,\n  \"protein_g\": 65\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Deletar item",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/items/1/delete",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Salvar recado da nutricionista",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/admin/notes",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"nutritionist_id\": 1,\n  \"message\": \"Lembre-se de beber 3L de água hoje!\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nutrição — Aluno",
+      "item": [
+        {
+          "name": "Plano ativo do aluno",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/plan",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Refeições do plano",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/plan/1/meals",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Refeições de hoje + macros",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/today",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Marcar refeição como consumida",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/logs",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_id\": 1,\n  \"consumed_at\": \"2025-01-15\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Desmarcar refeição",
+          "request": {
+            "method": "POST",
+            "url": "{{nutrition_url}}/logs/1/delete",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Recado da nutricionista",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/note",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Histórico de planos",
+          "request": {
+            "method": "GET",
+            "url": "{{nutrition_url}}/history",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
           }
         }
       ]

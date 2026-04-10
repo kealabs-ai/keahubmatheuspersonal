@@ -122,18 +122,20 @@ def get_user_orders(user_id: int):
 
 @app.get("/orders/{order_id}")
 def get_order(order_id: int):
-    require_admin(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT o.*, u.name as user_name, u.email as user_email
            FROM orders o
            JOIN users u ON u.id_user = o.id_user
-           ORDER BY o.created_at DESC"""
+           WHERE o.id_order=%s""",
+        (order_id,)
     )
-    orders = cursor.fetchall()
-    for order in orders:
-        cursor.execute("SELECT * FROM order_items WHERE id_order=%s", (order["id_order"],))
-        order["items"] = cursor.fetchall()
+    order = cursor.fetchone()
+    if not order:
+        cursor.close(); conn.close()
+        raise HTTPException(404, "Order not found")
+    cursor.execute("SELECT * FROM order_items WHERE id_order=%s", (order_id,))
+    order["items"] = cursor.fetchall()
     cursor.close(); conn.close()
-    return {"orders": orders, "total": len(orders)}
+    return order
