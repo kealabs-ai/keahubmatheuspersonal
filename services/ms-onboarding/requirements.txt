@@ -1,4 +1,6 @@
-fastapi
-uvicorn
-mysql-connector-python
-python-dateutil
+fastapi==0.104.1
+uvicorn==0.24.0
+mysql-connector-python==8.2.0
+pydantic==2.5.0
+PyJWT==2.8.0
+python-dateutil==2.9.0

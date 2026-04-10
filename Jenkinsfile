@@ -84,15 +84,19 @@ ENVEOF
                     $DOCKER build -t matheuspersonal/ms-videos:latest        -f services/ms-videos/Dockerfile services/
 
                     $DOCKER stack rm matheuspersonal || true
-                    sleep 30
 
-                    # Aguarda rede ser removida
-                    for i in $(seq 1 10); do
-                        $DOCKER network rm matheuspersonal_matheuspersonal 2>/dev/null && break || true
+                    # Aguarda stack ser completamente removido
+                    echo "Aguardando remocao do stack..."
+                    for i in $(seq 1 30); do
+                        COUNT=$($DOCKER stack ps matheuspersonal 2>/dev/null | grep -c Running || echo 0)
+                        [ "$COUNT" = "0" ] && break
+                        echo "Ainda rodando: $COUNT containers. Aguardando..."
                         sleep 5
                     done
+                    sleep 10
 
-                    $DOCKER stack deploy -c docker-compose.yml matheuspersonal --with-registry-auth
+                    $DOCKER stack deploy -c docker-compose.yml matheuspersonal --resolve-image never
+                    sleep 5
                     $DOCKER stack ps matheuspersonal
                 '''
             }
