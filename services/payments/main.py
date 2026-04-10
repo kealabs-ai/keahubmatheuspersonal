@@ -120,6 +120,12 @@ def list_all_payments(authorization: str = Header(...)):
     return {"payments": payments, "total": len(payments)}
 
 
+# alias para /api/payments/payments
+@app.get("/payments/payments")
+def list_all_payments_alias(authorization: str = Header(...)):
+    return list_all_payments(authorization)
+
+
 @app.get("/payments/order/{order_id}")
 def get_order_payments(order_id: int):
     conn = get_db()

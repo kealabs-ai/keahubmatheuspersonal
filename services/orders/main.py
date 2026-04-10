@@ -109,6 +109,12 @@ def get_all_orders(authorization: str = Header(...)):
     return {"orders": orders, "total": len(orders)}
 
 
+# alias para /api/aluno/orders/all
+@app.get("/orders/all")
+def get_all_orders_alias(authorization: str = Header(...)):
+    return get_all_orders(authorization)
+
+
 @app.get("/orders/user/{user_id}")
 def get_user_orders(user_id: int):
     conn = get_db()
