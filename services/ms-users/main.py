@@ -16,7 +16,7 @@ ALLOWED_ORIGINS = [
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
 def get_user_id(authorization: str) -> int:
@@ -67,6 +67,17 @@ class MetricsInput(BaseModel):
 
 class FeedbackInput(BaseModel):
     message: str
+
+
+class AdminUpdateUser(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    plan: Optional[str] = None
+    plan_start: Optional[date] = None
+    plan_renewal: Optional[date] = None
+    goal: Optional[str] = None
+    active: Optional[int] = None
+    role: Optional[str] = None
 
 
 @app.get("/users/all")
@@ -173,3 +184,19 @@ def send_feedback(body: FeedbackInput, authorization: str = Header(...)):
     fb_id = cursor.lastrowid
     cursor.close(); conn.close()
     return {"id": fb_id, "message": "Feedback enviado com sucesso."}
+
+
+@app.post("/users/admin/{user_id}")
+def admin_update_user(user_id: int, body: AdminUpdateUser, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    fields = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not fields:
+        cursor.close(); conn.close()
+        return {"message": "Nenhum campo para atualizar"}
+    set_clause = ", ".join(f"{k}=%s" for k in fields)
+    cursor.execute(f"UPDATE users SET {set_clause} WHERE id_user=%s", (*fields.values(), user_id))
+    conn.commit()
+    cursor.close(); conn.close()
+    return {"message": "Usuário atualizado com sucesso."}

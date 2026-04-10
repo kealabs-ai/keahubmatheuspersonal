@@ -81,6 +81,7 @@ ENVEOF
                     $DOCKER build -t matheuspersonal/ms-notifications:latest -f services/ms-notifications/Dockerfile services/
                     $DOCKER build -t matheuspersonal/ms-dashboard:latest    -f services/ms-dashboard/Dockerfile services/
                     $DOCKER build -t matheuspersonal/ms-onboarding:latest   -f services/ms-onboarding/Dockerfile services/
+                    $DOCKER build -t matheuspersonal/ms-videos:latest        -f services/ms-videos/Dockerfile services/
 
                     $DOCKER stack rm matheuspersonal || true
                     sleep 30

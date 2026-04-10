@@ -396,6 +396,18 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (user_id) REFERENCES users(id_user) ON DELETE CASCADE
 );
 
+-- ms-videos
+CREATE TABLE IF NOT EXISTS videos (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title         VARCHAR(255) NOT NULL,
+  description   TEXT,
+  url           VARCHAR(500) NOT NULL,
+  thumbnail_url VARCHAR(500),
+  category      VARCHAR(50) DEFAULT 'Geral',
+  duration_min  SMALLINT,
+  created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Seeds: badges padrão
 INSERT IGNORE INTO badges (slug, name, icon, condition_type, condition_value) VALUES
 ('first_workout',  'Primeiro treino',       '💪', 'total_workouts', 1),

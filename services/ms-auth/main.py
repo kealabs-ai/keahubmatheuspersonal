@@ -14,7 +14,7 @@ ALLOWED_ORIGINS = [
     "https://srv1023256.hstgr.cloud",
 ]
 
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
 JWT_EXPIRE = 3600

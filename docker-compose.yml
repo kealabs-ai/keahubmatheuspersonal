@@ -368,6 +368,30 @@ services:
     networks:
       - easypanel
 
+  ms-videos-service:
+    image: matheuspersonal/ms-videos:latest
+    environment:
+      DB_HOST: srv1078.hstgr.io
+      DB_PORT: "3306"
+      DB_NAME: u549746795_mp
+      DB_USER: u549746795_matheusmp
+      DB_PASSWORD: MP@2026!Passos
+      JWT_SECRET: your-secret-key-change-in-production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mp-ms-videos.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/admin/videos`)"
+      - "traefik.http.routers.mp-ms-videos.entrypoints=https"
+      - "traefik.http.routers.mp-ms-videos.tls=true"
+      - "traefik.http.middlewares.mp-strip-ms-videos.stripprefix.prefixes=/api"
+      - "traefik.http.routers.mp-ms-videos.middlewares=mp-strip-ms-videos,mp-cors"
+      - "traefik.http.services.mp-ms-videos.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - easypanel
+
   ms-onboarding-service:
     image: matheuspersonal/ms-onboarding:latest
     environment:
