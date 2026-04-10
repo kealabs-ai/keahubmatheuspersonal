@@ -102,7 +102,7 @@ def get_plan_meals(plan_id: int, authorization: str = Header(...)):
     get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM meals WHERE plan_id=%s ORDER BY sort_order", (plan_id,))
+    cursor.execute("SELECT *, meal_type as name FROM meals WHERE plan_id=%s ORDER BY sort_order", (plan_id,))
     meals = cursor.fetchall()
     for meal in meals:
         cursor.execute("SELECT * FROM meal_items WHERE meal_id=%s ORDER BY sort_order", (meal["id"],))
@@ -226,12 +226,16 @@ class UpdateNutritionPlan(BaseModel):
     active: Optional[bool] = None
 
 class MealInput(BaseModel):
-    name: str
-    time_label: Optional[str] = None
+    meal_type: str
+    meal_time: Optional[str] = None
+    icon: Optional[str] = None
+    is_highlight: bool = False
 
 class UpdateMeal(BaseModel):
-    name: Optional[str] = None
-    time_label: Optional[str] = None
+    meal_type: Optional[str] = None
+    meal_time: Optional[str] = None
+    icon: Optional[str] = None
+    is_highlight: Optional[bool] = None
 
 class MealItemInput(BaseModel):
     name: str
@@ -323,8 +327,8 @@ def admin_create_meal(plan_id: int, body: MealInput, authorization: str = Header
     cursor.execute("SELECT COUNT(*) as cnt FROM meals WHERE plan_id=%s", (plan_id,))
     sort_order = cursor.fetchone()["cnt"] + 1
     cursor.execute(
-        "INSERT INTO meals (plan_id, name, time_label, sort_order) VALUES (%s,%s,%s,%s)",
-        (plan_id, body.name, body.time_label, sort_order)
+        "INSERT INTO meals (plan_id, meal_type, meal_time, icon, is_highlight, sort_order) VALUES (%s,%s,%s,%s,%s,%s)",
+        (plan_id, body.meal_type, body.meal_time, body.icon, int(body.is_highlight), sort_order)
     )
     conn.commit()
     meal_id = cursor.lastrowid
