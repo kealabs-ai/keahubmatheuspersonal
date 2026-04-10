@@ -74,6 +74,7 @@ def login(body: LoginRequest):
         conn.commit()
     except Exception as e:
         cursor.close(); conn.close()
+        import traceback; traceback.print_exc()
         raise HTTPException(500, f"Erro ao salvar refresh_token: {str(e)}")
     cursor.close(); conn.close()
     return {
