@@ -35,7 +35,7 @@ ALLOWED_ORIGINS = [
 ]
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
 class Payment(BaseModel):
@@ -102,18 +102,26 @@ def reject_payment(payment_id: int):
         cursor.close()
         conn.close()
 
-@app.get("/payments/order/{order_id}")
-def get_order_payments(order_id: int):
+@app.get("/payments")
+def list_all_payments(authorization: str = Header(...)):
+    require_admin(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM payments WHERE id_order=%s", (order_id,))
+    cursor.execute(
+        """SELECT p.*, o.id_user, u.name as user_name, u.email as user_email
+           FROM payments p
+           JOIN orders o ON o.id_order = p.id_order
+           JOIN users u ON u.id_user = o.id_user
+           ORDER BY p.id_payment DESC"""
+    )
     payments = cursor.fetchall()
     cursor.close()
     conn.close()
-    return payments
+    return {"payments": payments, "total": len(payments)}
 
-@app.get("/payments")
-def list_all_payments(authorization: str = Header(...)):
+
+@app.get("/payments/order/{order_id}")
+def get_order_payments(order_id: int):
     require_admin(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)

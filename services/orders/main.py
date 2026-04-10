@@ -36,7 +36,7 @@ ALLOWED_ORIGINS = [
 ]
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -90,20 +90,24 @@ def create_order(order: Order):
         cursor.close()
         conn.close()
 
-@app.get("/orders/{order_id}")
-def get_order(order_id: int):
+@app.get("/orders")
+def get_all_orders(authorization: str = Header(...)):
+    require_admin(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM orders WHERE id_order=%s", (order_id,))
-    order = cursor.fetchone()
-    if order:
-        cursor.execute("SELECT * FROM order_items WHERE id_order=%s", (order_id,))
-        order['items'] = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    if not order:
-        raise HTTPException(404, "Order not found")
-    return order
+    cursor.execute(
+        """SELECT o.*, u.name as user_name, u.email as user_email
+           FROM orders o
+           JOIN users u ON u.id_user = o.id_user
+           ORDER BY o.created_at DESC"""
+    )
+    orders = cursor.fetchall()
+    for order in orders:
+        cursor.execute("SELECT * FROM order_items WHERE id_order=%s", (order["id_order"],))
+        order["items"] = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"orders": orders, "total": len(orders)}
+
 
 @app.get("/orders/user/{user_id}")
 def get_user_orders(user_id: int):
@@ -116,8 +120,8 @@ def get_user_orders(user_id: int):
     return orders
 
 
-@app.get("/orders")
-def get_all_orders(authorization: str = Header(...)):
+@app.get("/orders/{order_id}")
+def get_order(order_id: int):
     require_admin(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
