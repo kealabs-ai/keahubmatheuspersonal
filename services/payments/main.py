@@ -36,6 +36,9 @@ ALLOWED_ORIGINS = [
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+
+class Payment(BaseModel):
     id_order: int
     payment_method: str
     amount: Decimal

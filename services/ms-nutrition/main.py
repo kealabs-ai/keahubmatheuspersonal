@@ -12,8 +12,13 @@ ALLOWED_ORIGINS = [
     "https://srv1023256.hstgr.cloud",
 ]
 
+JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
+
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+
+def require_admin(authorization: str) -> int:
     try:
         token = authorization.split(" ")[1]
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
@@ -25,7 +30,7 @@ app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credenti
     cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
     user = cursor.fetchone()
     cursor.close(); conn.close()
-    if not user or user["role"] not in ("admin", "trainer"):
+    if not user or user["role"] not in ("admin", "trainer", "nutritionist"):
         raise HTTPException(403, "Acesso restrito")
     return user_id
 
@@ -69,6 +74,27 @@ def get_active_plan(authorization: str = Header(...)):
         "water_goal_ml": plan["water_goal_ml"],
         "nutritionist": {"name": plan["nutritionist_name"], "crn": plan["crn"]}
     }}
+
+
+@app.get("/nutrition/plans/all")
+def list_all_nutrition_plans(authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT np.id, np.user_id, u.name as user_name, np.name, np.goal_calories,
+              np.goal_protein_g, np.goal_carbs_g, np.goal_fat_g, np.water_goal_ml,
+              np.active, np.valid_from, np.valid_until, np.created_at,
+              un.name as nutritionist_name, n.crn
+           FROM nutrition_plans np
+           JOIN users u ON u.id_user = np.user_id
+           JOIN nutritionists n ON n.id = np.nutritionist_id
+           JOIN users un ON un.id_user = n.user_id
+           ORDER BY np.created_at DESC"""
+    )
+    plans = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"plans": plans, "total": len(plans)}
 
 
 @app.get("/nutrition/plan/{plan_id}/meals")
@@ -171,27 +197,6 @@ def get_note(authorization: str = Header(...)):
     if not note:
         raise HTTPException(404, "Nenhum recado encontrado")
     return note
-
-
-@app.get("/nutrition/plans/all")
-def list_all_nutrition_plans(authorization: str = Header(...)):
-    require_admin(authorization)
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        """SELECT np.id, np.user_id, u.name as user_name, np.name, np.goal_calories,
-              np.goal_protein_g, np.goal_carbs_g, np.goal_fat_g, np.water_goal_ml,
-              np.active, np.valid_from, np.valid_until, np.created_at,
-              un.name as nutritionist_name, n.crn
-           FROM nutrition_plans np
-           JOIN users u ON u.id_user = np.user_id
-           JOIN nutritionists n ON n.id = np.nutritionist_id
-           JOIN users un ON un.id_user = n.user_id
-           ORDER BY np.created_at DESC"""
-    )
-    plans = cursor.fetchall()
-    cursor.close(); conn.close()
-    return {"plans": plans, "total": len(plans)}
 
 
 from typing import Optional
