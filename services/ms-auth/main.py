@@ -49,20 +49,32 @@ def login(body: LoginRequest):
         (body.email,)
     )
     user = cursor.fetchone()
-    if not user or not bcrypt.checkpw(body.password.encode(), user["password"].encode()):
+    if not user:
         cursor.close(); conn.close()
-        raise HTTPException(401, "Credenciais inválidas")
+        raise HTTPException(401, "Usuário não encontrado")
+    try:
+        pwd_match = bcrypt.checkpw(body.password.encode("utf-8"), user["password"].encode("utf-8"))
+    except Exception as e:
+        cursor.close(); conn.close()
+        raise HTTPException(401, f"Erro ao verificar senha: {str(e)}")
+    if not pwd_match:
+        cursor.close(); conn.close()
+        raise HTTPException(401, "Senha incorreta")
     if not user["active"]:
         cursor.close(); conn.close()
         raise HTTPException(403, "Conta inativa")
     access_token = make_token(user["id"], user["role"])
     refresh_token = secrets.token_hex(64)
     expires_at = datetime.utcnow() + timedelta(days=30)
-    cursor.execute(
-        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (%s,%s,%s)",
-        (user["id"], refresh_token, expires_at)
-    )
-    conn.commit()
+    try:
+        cursor.execute(
+            "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (%s,%s,%s)",
+            (user["id"], refresh_token, expires_at)
+        )
+        conn.commit()
+    except Exception as e:
+        cursor.close(); conn.close()
+        raise HTTPException(500, f"Erro ao salvar refresh_token: {str(e)}")
     cursor.close(); conn.close()
     return {
         "access_token": access_token,
