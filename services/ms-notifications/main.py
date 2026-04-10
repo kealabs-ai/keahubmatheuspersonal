@@ -13,6 +13,20 @@ ALLOWED_ORIGINS = [
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
+
+
+def get_user_id(authorization: str) -> int:
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+
+
+@app.get("/notifications")
 def list_notifications(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
@@ -23,6 +37,7 @@ def list_notifications(authorization: str = Header(...)):
     unread = cursor.fetchone()["cnt"]
     cursor.close(); conn.close()
     return {"unread_count": unread, "notifications": notifications}
+
 
 @app.post("/notifications/{notification_id}/read")
 def mark_read(notification_id: int, authorization: str = Header(...)):
@@ -35,6 +50,7 @@ def mark_read(notification_id: int, authorization: str = Header(...)):
     cursor.close(); conn.close()
     return {"message": "Notificação marcada como lida."}
 
+
 @app.post("/notifications/read-all")
 def mark_all_read(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
@@ -46,6 +62,7 @@ def mark_all_read(authorization: str = Header(...)):
     updated = cursor.rowcount
     cursor.close(); conn.close()
     return {"message": f"{updated} notificações marcadas como lidas."}
+
 
 @app.get("/notifications/unread-count")
 def unread_count(authorization: str = Header(...)):

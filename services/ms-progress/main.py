@@ -14,7 +14,11 @@ ALLOWED_ORIGINS = [
 ]
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]) = {"1m": 1, "3m": 3, "6m": 6, "1y": 12}
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
+
+PERIOD_MONTHS = {"1m": 1, "3m": 3, "6m": 6, "1y": 12}
 
 
 def get_user_id(authorization: str) -> int:

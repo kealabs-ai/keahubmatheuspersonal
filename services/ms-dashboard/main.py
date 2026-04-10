@@ -13,19 +13,31 @@ ALLOWED_ORIGINS = [
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
+
+
+def get_user_id(authorization: str) -> int:
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload["sub"]
+    except Exception:
+        raise HTTPException(401, "Token inválido")
+
+
+@app.get("/dashboard/summary")
 def get_summary(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    # User info
     cursor.execute("SELECT name, plan, plan_renewal FROM users WHERE id_user=%s", (user_id,))
     user = cursor.fetchone()
     if not user:
         cursor.close(); conn.close()
         raise HTTPException(404, "Usuário não encontrado")
 
-    # Streak e stats
     cursor.execute("""SELECT DATE(finished_at) as day FROM workout_logs
                       WHERE user_id=%s AND completed=1 ORDER BY day DESC""", (user_id,))
     rows = cursor.fetchall()
@@ -50,7 +62,6 @@ def get_summary(authorization: str = Header(...)):
     days_row = cursor.fetchone()
     days_active = days_row["days"] or 0
 
-    # Plano ativo da semana
     cursor.execute("SELECT id FROM workout_plans WHERE user_id=%s AND active=1 ORDER BY created_at DESC LIMIT 1", (user_id,))
     plan_row = cursor.fetchone()
     week = []
@@ -81,11 +92,9 @@ def get_summary(authorization: str = Header(...)):
                 today_workout = {"day_id": d["id"], "name": d["name"],
                                  "duration_min": d["duration_min"], "exercises_count": ex_count}
 
-    # Notificações não lidas
     cursor.execute("SELECT COUNT(*) as cnt FROM notifications WHERE user_id=%s AND read_at IS NULL", (user_id,))
     unread = cursor.fetchone()["cnt"]
 
-    # Badges
     cursor.execute("SELECT COUNT(*) as cnt FROM user_badges WHERE user_id=%s", (user_id,))
     badges_earned = cursor.fetchone()["cnt"]
     cursor.execute("SELECT COUNT(*) as cnt FROM badges", ())
