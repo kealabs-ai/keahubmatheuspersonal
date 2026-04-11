@@ -88,8 +88,8 @@ def list_all_nutrition_plans(authorization: str = Header(...)):
               un.name as nutritionist_name, n.crn
            FROM nutrition_plans np
            JOIN users u ON u.id_user = np.user_id
-           JOIN nutritionists n ON n.id = np.nutritionist_id
-           JOIN users un ON un.id_user = n.user_id
+           LEFT JOIN nutritionists n ON n.id = np.nutritionist_id
+           LEFT JOIN users un ON un.id_user = n.user_id
            ORDER BY np.created_at DESC"""
     )
     plans = cursor.fetchall()
