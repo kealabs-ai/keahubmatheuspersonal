@@ -1,11 +1,16 @@
 from fastapi import FastAPI, HTTPException, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
-import sys, os, jwt
+import sys, os, jwt, base64, uuid, re
 sys.path.append('..')
 from database import get_db
+
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads/photos")
+BASE_URL = os.getenv("BASE_URL", "https://srv1023256.hstgr.cloud")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 ALLOWED_ORIGINS = [
     "https://www.matheuspersonal.com.br",
@@ -15,6 +20,7 @@ ALLOWED_ORIGINS = [
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
 
@@ -35,7 +41,7 @@ class WeightInput(BaseModel):
     recorded_at: date
 
 class PhotoInput(BaseModel):
-    photo_url: str
+    photo_base64: str          # data:image/jpeg;base64,/9j/... ou só o base64 puro
     label: Optional[str] = None
     recorded_at: date
 
@@ -134,16 +140,43 @@ def get_photos(authorization: str = Header(...)):
 @app.post("/progress/photos", status_code=201)
 def add_photo(body: PhotoInput, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
+
+    # Suporta "data:image/jpeg;base64,XXX" ou base64 puro
+    match = re.match(r"data:(image/\w+);base64,(.+)", body.photo_base64)
+    if match:
+        mime, b64_data = match.group(1), match.group(2)
+    else:
+        mime, b64_data = "image/jpeg", body.photo_base64
+
+    ext = mime.split("/")[1]  # jpeg, png, webp
+    if ext not in ("jpeg", "jpg", "png", "webp"):
+        raise HTTPException(400, "Formato inválido. Use jpeg, png ou webp.")
+
+    try:
+        image_bytes = base64.b64decode(b64_data)
+    except Exception:
+        raise HTTPException(400, "Base64 inválido")
+
+    if len(image_bytes) > 10 * 1024 * 1024:  # 10MB
+        raise HTTPException(400, "Imagem muito grande. Máximo 10MB.")
+
+    filename = f"{user_id}_{uuid.uuid4().hex}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    with open(filepath, "wb") as f:
+        f.write(image_bytes)
+
+    photo_url = f"{BASE_URL}/uploads/photos/{filename}"
+
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO progress_photos (user_id, photo_url, label, recorded_at) VALUES (%s,%s,%s,%s)",
-        (user_id, body.photo_url, body.label, body.recorded_at)
+        (user_id, photo_url, body.label, body.recorded_at)
     )
     conn.commit()
     photo_id = cursor.lastrowid
     cursor.close(); conn.close()
-    return {"id": photo_id, "message": "Foto adicionada com sucesso."}
+    return {"id": photo_id, "photo_url": photo_url, "message": "Foto adicionada com sucesso."}
 
 
 @app.post("/progress/photos/{photo_id}/delete")

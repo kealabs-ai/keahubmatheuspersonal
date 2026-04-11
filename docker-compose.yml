@@ -281,6 +281,10 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
+      UPLOAD_DIR: /app/uploads/photos
+      BASE_URL: https://srv1023256.hstgr.cloud
+    volumes:
+      - progress_uploads:/app/uploads
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-progress.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/progress`)"
@@ -419,3 +423,6 @@ services:
 networks:
   easypanel:
     external: true
+
+volumes:
+  progress_uploads:
