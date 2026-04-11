@@ -396,6 +396,27 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (user_id) REFERENCES users(id_user) ON DELETE CASCADE
 );
 
+-- ms-onboarding config
+CREATE TABLE IF NOT EXISTS onboarding_config (
+  id                    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  default_workout_name  VARCHAR(100) NOT NULL DEFAULT 'Plano Inicial',
+  welcome_message       TEXT,
+  welcome_notification_title VARCHAR(150) NOT NULL DEFAULT 'Bem-vindo ao MatheusPersonal!',
+  welcome_notification_body  TEXT,
+  default_week_template JSON,
+  updated_by            INT UNSIGNED,
+  updated_at            DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (updated_by) REFERENCES users(id_user)
+);
+
+INSERT IGNORE INTO onboarding_config (id, default_workout_name, welcome_notification_title, welcome_notification_body, default_week_template) VALUES (
+  1,
+  'Plano Inicial',
+  'Bem-vindo ao MatheusPersonal!',
+  'Seu plano foi ativado com sucesso. Acesse a área do aluno e comece sua jornada!',
+  '[{"week_day":1,"name":"Peito + Tríceps","duration_min":50,"is_rest":false},{"week_day":2,"name":"Descanso","duration_min":0,"is_rest":true},{"week_day":3,"name":"Costas + Bíceps","duration_min":50,"is_rest":false},{"week_day":4,"name":"Descanso","duration_min":0,"is_rest":true},{"week_day":5,"name":"Pernas + Ombros","duration_min":55,"is_rest":false},{"week_day":6,"name":"Descanso","duration_min":0,"is_rest":true},{"week_day":7,"name":"Descanso","duration_min":0,"is_rest":true}]'
+);
+
 -- ms-videos
 CREATE TABLE IF NOT EXISTS videos (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

@@ -403,10 +403,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-ms-onboarding.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/onboarding`)"
+      - "traefik.http.routers.mp-ms-onboarding.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && (PathPrefix(`/api/onboarding`) || PathPrefix(`/api/admin/onboarding`))"
       - "traefik.http.routers.mp-ms-onboarding.entrypoints=https"
       - "traefik.http.routers.mp-ms-onboarding.tls=true"
-      - "traefik.http.middlewares.mp-strip-onboarding.stripprefix.prefixes=/api"
+      - "traefik.http.middlewares.mp-strip-onboarding.stripprefix.prefixes=/api/admin,/api"
       - "traefik.http.routers.mp-ms-onboarding.middlewares=mp-strip-onboarding,mp-cors"
       - "traefik.http.services.mp-ms-onboarding.loadbalancer.server.port=8000"
     deploy:
