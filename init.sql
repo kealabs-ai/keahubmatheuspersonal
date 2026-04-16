@@ -200,29 +200,32 @@ CREATE TABLE IF NOT EXISTS student_feedbacks (
 );
 
 -- ms-workouts
-CREATE TABLE IF NOT EXISTS workout_plans (
+
+-- Template compartilhado entre todos os planos
+CREATE TABLE IF NOT EXISTS workout_templates (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT UNSIGNED NOT NULL,
   trainer_id  INT UNSIGNED NOT NULL,
   name        VARCHAR(100) NOT NULL,
-  week_start  DATE,
+  goal        ENUM('Hipertrofia','Emagrecimento','Condicionamento','Saúde Geral','Performance') NOT NULL,
+  level       ENUM('Iniciante','Intermediário','Avançado') DEFAULT 'Iniciante',
   active      TINYINT(1) DEFAULT 1,
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id)    REFERENCES users(id_user) ON DELETE CASCADE,
   FOREIGN KEY (trainer_id) REFERENCES users(id_user)
 );
 
-CREATE TABLE IF NOT EXISTS workout_days (
+-- Dias da semana do template (compartilhado, não duplicado por aluno)
+CREATE TABLE IF NOT EXISTS workout_template_days (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  plan_id      INT UNSIGNED NOT NULL,
-  week_day     TINYINT NOT NULL,
+  template_id  INT UNSIGNED NOT NULL,
+  week_day     TINYINT NOT NULL COMMENT '1=Seg ... 7=Dom',
   name         VARCHAR(100) NOT NULL,
   duration_min SMALLINT,
   is_rest      TINYINT(1) DEFAULT 0,
   sort_order   TINYINT DEFAULT 0,
-  FOREIGN KEY (plan_id) REFERENCES workout_plans(id) ON DELETE CASCADE
+  FOREIGN KEY (template_id) REFERENCES workout_templates(id) ON DELETE CASCADE
 );
 
+-- Exercícios do template (reaproveitados por todos os alunos do mesmo template)
 CREATE TABLE IF NOT EXISTS exercises (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   day_id       INT UNSIGNED NOT NULL,
@@ -233,9 +236,36 @@ CREATE TABLE IF NOT EXISTS exercises (
   rest_seconds SMALLINT,
   video_url    VARCHAR(500),
   sort_order   TINYINT DEFAULT 0,
-  FOREIGN KEY (day_id) REFERENCES workout_days(id) ON DELETE CASCADE
+  FOREIGN KEY (day_id) REFERENCES workout_template_days(id) ON DELETE CASCADE
 );
 
+-- Ciclo bimestral do aluno (~60 dias)
+CREATE TABLE IF NOT EXISTS workout_cycles (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT UNSIGNED NOT NULL,
+  cycle_number TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Bimestre 1, 2, 3...',
+  valid_from   DATE NOT NULL,
+  valid_until  DATE NOT NULL COMMENT 'valid_from + ~60 dias',
+  active       TINYINT(1) DEFAULT 1,
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_user_active_cycle (user_id, active),
+  FOREIGN KEY (user_id) REFERENCES users(id_user) ON DELETE CASCADE
+);
+
+-- Plano do aluno: liga ciclo bimestral + template
+CREATE TABLE IF NOT EXISTS workout_plans (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  cycle_id    INT UNSIGNED NOT NULL,
+  template_id INT UNSIGNED NOT NULL,
+  trainer_id  INT UNSIGNED NOT NULL,
+  name        VARCHAR(100) NOT NULL,
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cycle_id)    REFERENCES workout_cycles(id) ON DELETE CASCADE,
+  FOREIGN KEY (template_id) REFERENCES workout_templates(id),
+  FOREIGN KEY (trainer_id)  REFERENCES users(id_user)
+);
+
+-- Log de execução do treino pelo aluno
 CREATE TABLE IF NOT EXISTS workout_logs (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id     INT UNSIGNED NOT NULL,
@@ -245,7 +275,7 @@ CREATE TABLE IF NOT EXISTS workout_logs (
   completed   TINYINT(1) DEFAULT 0,
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id_user) ON DELETE CASCADE,
-  FOREIGN KEY (day_id)  REFERENCES workout_days(id)
+  FOREIGN KEY (day_id)  REFERENCES workout_template_days(id)
 );
 
 CREATE TABLE IF NOT EXISTS exercise_logs (

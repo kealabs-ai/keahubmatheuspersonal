@@ -259,10 +259,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mp-ms-workouts.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && (PathPrefix(`/api/aluno/workouts`) || PathPrefix(`/api/workouts`))"
+      - "traefik.http.routers.mp-ms-workouts.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && (PathPrefix(`/api/aluno/workouts`) || PathPrefix(`/api/workouts`) || PathPrefix(`/api/admin/workouts`))"
       - "traefik.http.routers.mp-ms-workouts.entrypoints=https"
       - "traefik.http.routers.mp-ms-workouts.tls=true"
-      - "traefik.http.middlewares.mp-strip-workouts.stripprefix.prefixes=/api/aluno,/api"
+      - "traefik.http.middlewares.mp-strip-workouts.stripprefix.prefixes=/api/aluno,/api/admin,/api"
       - "traefik.http.routers.mp-ms-workouts.middlewares=mp-strip-workouts,mp-cors"
       - "traefik.http.services.mp-ms-workouts.loadbalancer.server.port=8000"
     deploy:
