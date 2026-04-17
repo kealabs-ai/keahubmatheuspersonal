@@ -482,7 +482,7 @@ def get_history(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT wl.id, wtd.name as day_name, wt.name as template_name,
+        """SELECT wl.id, wl.training, wtd.name as day_name, wt.name as template_name,
                   wl.started_at, wl.finished_at, wl.completed
            FROM workout_logs wl
            JOIN workout_template_days wtd ON wtd.id = wl.day_id
