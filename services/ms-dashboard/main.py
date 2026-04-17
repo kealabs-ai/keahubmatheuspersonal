@@ -57,21 +57,26 @@ def get_summary(authorization: str = Header(...)):
                       WHERE user_id=%s AND completed=1 AND YEARWEEK(finished_at,1)=YEARWEEK(NOW(),1)""", (user_id,))
     trainings_week = cursor.fetchone()["cnt"]
 
-    cursor.execute("""SELECT DATEDIFF(MAX(DATE(finished_at)), MIN(DATE(created_at))) + 1 as days
+    cursor.execute("""SELECT DATEDIFF(MAX(DATE(finished_at)), MIN(DATE(started_at))) + 1 as days
                       FROM workout_logs WHERE user_id=%s AND completed=1""", (user_id,))
     days_row = cursor.fetchone()
     days_active = days_row["days"] or 0
 
-    cursor.execute("SELECT id FROM workout_plans WHERE user_id=%s AND active=1 ORDER BY created_at DESC LIMIT 1", (user_id,))
+    cursor.execute("""
+        SELECT wp.template_id FROM workout_plans wp
+        JOIN workout_cycles wc ON wc.id = wp.cycle_id
+        WHERE wc.user_id=%s AND wc.active=1
+        ORDER BY wp.id DESC LIMIT 1""", (user_id,))
     plan_row = cursor.fetchone()
     week = []
     today_workout = None
     if plan_row:
-        cursor.execute("""SELECT wd.id, wd.week_day, wd.name, wd.duration_min, wd.is_rest
-                          FROM workout_days wd WHERE wd.plan_id=%s ORDER BY wd.sort_order""", (plan_row["id"],))
+        cursor.execute("""SELECT id, week_day, name, duration_min, is_rest
+                          FROM workout_template_days WHERE template_id=%s ORDER BY sort_order""",
+                       (plan_row["template_id"],))
         days = cursor.fetchall()
-        cursor.execute("""SELECT DISTINCT wd.week_day FROM workout_logs wl
-                          JOIN workout_days wd ON wd.id = wl.day_id
+        cursor.execute("""SELECT DISTINCT wtd.week_day FROM workout_logs wl
+                          JOIN workout_template_days wtd ON wtd.id = wl.day_id
                           WHERE wl.user_id=%s AND wl.completed=1
                           AND YEARWEEK(wl.finished_at,1)=YEARWEEK(NOW(),1)""", (user_id,))
         completed_days = {r["week_day"] for r in cursor.fetchall()}
