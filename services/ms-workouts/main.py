@@ -92,6 +92,7 @@ class CreateCycle(BaseModel):
 
 class StartLog(BaseModel):
     day_id: int
+    training: Optional[str] = None
 
 class FinishLog(BaseModel):
     completed: bool = True
@@ -433,8 +434,8 @@ def start_log(body: StartLog, authorization: str = Header(...)):
     cursor = conn.cursor()
     started_at = datetime.utcnow()
     cursor.execute(
-        "INSERT INTO workout_logs (user_id, day_id, started_at) VALUES (%s,%s,%s)",
-        (user_id, body.day_id, started_at)
+        "INSERT INTO workout_logs (user_id, day_id, started_at, training) VALUES (%s,%s,%s,%s)",
+        (user_id, body.day_id, started_at, body.training)
     )
     conn.commit()
     log_id = cursor.lastrowid

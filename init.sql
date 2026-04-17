@@ -273,6 +273,7 @@ CREATE TABLE IF NOT EXISTS workout_logs (
   started_at  DATETIME,
   finished_at DATETIME,
   completed   TINYINT(1) DEFAULT 0,
+  training     VARCHAR(10) DEFAULT NULL,
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id_user) ON DELETE CASCADE,
   FOREIGN KEY (day_id)  REFERENCES workout_template_days(id)
