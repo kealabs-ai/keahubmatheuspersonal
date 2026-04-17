@@ -35,11 +35,12 @@ def require_admin(authorization: str) -> int:
     try:
         cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
         user = cursor.fetchone()
+        if not user or user["role"] not in ("admin", "trainer"):
+            raise HTTPException(403, "Acesso restrito")
+        return user_id
     finally:
-        cursor.close(); conn.close()
-    if not user or user["role"] not in ("admin", "trainer"):
-        raise HTTPException(403, "Acesso restrito")
-    return user_id
+        cursor.close()
+        conn.close()
 
 
 # ── Models ──────────────────────────────────────────────
@@ -319,8 +320,8 @@ def create_cycle(body: CreateCycle, authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    # desativa ciclo anterior do aluno
-    cursor.execute("UPDATE workout_cycles SET active=0 WHERE user_id=%s AND active=1", (body.user_id,))
+    # desativa ciclo anterior do aluno (NULL para não violar UNIQUE KEY)
+    cursor.execute("UPDATE workout_cycles SET active=NULL WHERE user_id=%s AND active=1", (body.user_id,))
 
     # calcula próximo cycle_number
     cursor.execute("SELECT COUNT(*) as cnt FROM workout_cycles WHERE user_id=%s", (body.user_id,))
@@ -379,7 +380,7 @@ def get_active_plan(authorization: str = Header(...)):
            JOIN workout_plans wp ON wp.cycle_id = wc.id
            JOIN workout_templates wt ON wt.id = wp.template_id
            WHERE wc.user_id=%s AND wc.active=1
-           ORDER BY wc.created_at DESC LIMIT 1""",
+           ORDER BY wc.id DESC LIMIT 1""",
         (user_id,)
     )
     plan = cursor.fetchone()

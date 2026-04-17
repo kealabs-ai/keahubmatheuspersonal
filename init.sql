@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS workout_cycles (
   valid_until  DATE NOT NULL COMMENT 'valid_from + ~60 dias',
   active       TINYINT(1) DEFAULT 1,
   created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_user_active_cycle (user_id, active),
+  UNIQUE KEY uq_user_active_cycle (user_id, active) COMMENT 'NULL=inativo, 1=ativo',
   FOREIGN KEY (user_id) REFERENCES users(id_user) ON DELETE CASCADE
 );
 

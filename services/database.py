@@ -8,7 +8,7 @@ db_config = {
     'database': os.getenv('DB_NAME', 'matheuspersonal'),
     'user': os.getenv('DB_USER', 'root'),
     'password': os.getenv('DB_PASSWORD', ''),
-    'pool_name': 'mypool',
+    'pool_name': os.getenv('DB_POOL_NAME', 'mypool'),
     'pool_size': 5
 }
 

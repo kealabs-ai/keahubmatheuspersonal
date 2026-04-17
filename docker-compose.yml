@@ -257,6 +257,7 @@ services:
       DB_USER: u549746795_matheusmp
       DB_PASSWORD: MP@2026!Passos
       JWT_SECRET: your-secret-key-change-in-production
+      DB_POOL_NAME: pool_workouts
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-workouts.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && (PathPrefix(`/api/aluno/workouts`) || PathPrefix(`/api/workouts`) || PathPrefix(`/api/admin/workouts`))"
