@@ -63,10 +63,8 @@ def get_summary(authorization: str = Header(...)):
     days_active = days_row["days"] or 0
 
     cursor.execute("""
-        SELECT wp.template_id FROM workout_plans wp
-        JOIN workout_cycles wc ON wc.id = wp.cycle_id
-        WHERE wc.user_id=%s AND wc.active=1
-        ORDER BY wp.id DESC LIMIT 1""", (user_id,))
+        SELECT id as template_id FROM workout_templates WHERE active=1 ORDER BY id DESC LIMIT 1"""
+    )
     plan_row = cursor.fetchone()
     week = []
     today_workout = None

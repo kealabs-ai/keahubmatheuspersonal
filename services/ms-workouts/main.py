@@ -373,15 +373,8 @@ def get_active_plan(authorization: str = Header(...)):
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute(
-        """SELECT wc.id as cycle_id, wc.cycle_number, wc.valid_from, wc.valid_until,
-                  wp.id as plan_id, wp.name as plan_name,
-                  wt.id as template_id, wt.name as template_name, wt.goal, wt.level
-           FROM workout_cycles wc
-           JOIN workout_plans wp ON wp.cycle_id = wc.id
-           JOIN workout_templates wt ON wt.id = wp.template_id
-           WHERE wc.user_id=%s AND wc.active=1
-           ORDER BY wc.id DESC LIMIT 1""",
-        (user_id,)
+        "SELECT id as template_id, name as template_name, goal, level"
+        " FROM workout_templates WHERE active=1 ORDER BY id DESC LIMIT 1"
     )
     plan = cursor.fetchone()
     if not plan:
