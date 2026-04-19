@@ -54,7 +54,7 @@ def get_weight(period: str = Query("6m"), authorization: str = Header(...)):
     cursor = conn.cursor(dictionary=True)
     # Retorna registros individuais ordenados por data
     cursor.execute(
-        """SELECT DATE_FORMAT(recorded_at, '%%Y-%%m-%%d') as date,
+        """SELECT DATE_FORMAT(recorded_at, '%Y-%m-%d') as date,
                   weight_kg as weight, recorded_at
            FROM weight_history
            WHERE user_id=%s AND recorded_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
