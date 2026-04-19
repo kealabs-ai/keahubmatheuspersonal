@@ -37,61 +37,83 @@ def send_reset_email(to_email: str, to_name: str, reset_link: str):
     year = datetime.utcnow().year
     html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#0f0f0f;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;padding:40px 0;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Inter,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:48px 0;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-        <!-- Header / Logo -->
+        <!-- Logo / Header -->
         <tr>
-          <td style="background:linear-gradient(135deg,#c8a96e 0%,#a07840 100%);padding:40px 40px 30px;text-align:center;">
-            <div style="font-size:32px;font-weight:900;color:#0f0f0f;letter-spacing:2px;text-transform:uppercase;">MATHEUS</div>
-            <div style="font-size:13px;font-weight:600;color:#0f0f0f;letter-spacing:6px;text-transform:uppercase;margin-top:2px;">PERSONAL</div>
-            <div style="width:40px;height:3px;background:#0f0f0f;margin:12px auto 0;border-radius:2px;"></div>
+          <td align="center" style="padding-bottom:32px;">
+            <div style="display:inline-block;">
+              <div style="font-family:Oswald,sans-serif;font-size:36px;font-weight:700;color:#00B4D8;letter-spacing:4px;text-transform:uppercase;line-height:1;">MATHEUS</div>
+              <div style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:#0096C7;letter-spacing:8px;text-transform:uppercase;margin-top:4px;text-align:center;">PERSONAL</div>
+              <div style="width:100%;height:2px;background:linear-gradient(to right,#00B4D8,#0096C7);margin-top:8px;border-radius:1px;"></div>
+            </div>
           </td>
         </tr>
 
-        <!-- Body -->
+        <!-- Card -->
         <tr>
-          <td style="padding:40px 40px 30px;">
-            <p style="color:#c8a96e;font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin:0 0 16px;">Recuperacao de Senha</p>
-            <h1 style="color:#ffffff;font-size:26px;font-weight:700;margin:0 0 20px;line-height:1.3;">Ola, {to_name}!</h1>
-            <p style="color:#aaaaaa;font-size:15px;line-height:1.7;margin:0 0 24px;">
-              Recebemos uma solicitacao para redefinir a senha da sua conta no
-              <strong style="color:#ffffff;">MatheusPersonal</strong>.
-              Clique no botao abaixo para criar uma nova senha.
-            </p>
-            <p style="color:#aaaaaa;font-size:14px;line-height:1.7;margin:0 0 32px;">
-              Este link e valido por <strong style="color:#c8a96e;">1 hora</strong>.
-              Se voce nao solicitou a recuperacao, ignore este e-mail.
-            </p>
+          <td style="background:#1a1a1a;border-radius:12px;border:1px solid #2a2a2a;overflow:hidden;">
 
-            <!-- CTA Button -->
-            <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
-              <tr>
-                <td style="background:linear-gradient(135deg,#c8a96e 0%,#a07840 100%);border-radius:8px;">
-                  <a href="{reset_link}" style="display:inline-block;padding:16px 40px;color:#0f0f0f;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:1px;">REDEFINIR SENHA</a>
-                </td>
-              </tr>
-            </table>
+            <!-- Card top accent -->
+            <tr>
+              <td style="height:3px;background:linear-gradient(to right,#00B4D8,#0096C7);"></td>
+            </tr>
 
-            <!-- Fallback link -->
-            <p style="color:#666666;font-size:12px;line-height:1.6;margin:0;word-break:break-all;">
-              Ou copie e cole este link no navegador:<br>
-              <a href="{reset_link}" style="color:#c8a96e;text-decoration:none;">{reset_link}</a>
-            </p>
+            <!-- Card body -->
+            <tr>
+              <td style="padding:48px 48px 40px;">
+                <p style="color:#00B4D8;font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;margin:0 0 20px;">Recuperacao de Senha</p>
+                <h1 style="color:#ffffff;font-family:Oswald,sans-serif;font-size:28px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:0 0 24px;line-height:1.2;">Ola, {to_name}</h1>
+                <p style="color:#9ca3af;font-size:15px;line-height:1.7;margin:0 0 16px;">
+                  Recebemos uma solicitacao para redefinir a senha da sua conta no
+                  <strong style="color:#ffffff;">MatheusPersonal</strong>.
+                </p>
+                <p style="color:#9ca3af;font-size:15px;line-height:1.7;margin:0 0 36px;">
+                  Clique no botao abaixo para criar uma nova senha. Este link e valido por
+                  <strong style="color:#00B4D8;">1 hora</strong>.
+                </p>
+
+                <!-- CTA -->
+                <table cellpadding="0" cellspacing="0" style="margin:0 0 36px;">
+                  <tr>
+                    <td style="background:linear-gradient(to right,#00B4D8,#0096C7);border-radius:6px;">
+                      <a href="{reset_link}" style="display:inline-block;padding:14px 36px;color:#0a0a0a;font-size:13px;font-weight:700;text-decoration:none;letter-spacing:2px;text-transform:uppercase;font-family:Oswald,sans-serif;">REDEFINIR SENHA</a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Divider -->
+                <div style="height:1px;background:#2a2a2a;margin-bottom:24px;"></div>
+
+                <!-- Warning -->
+                <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0 0 16px;">
+                  Se voce nao solicitou a recuperacao de senha, ignore este e-mail. Sua senha permanece a mesma.
+                </p>
+
+                <!-- Fallback link -->
+                <p style="color:#6b7280;font-size:12px;line-height:1.6;margin:0;">
+                  Ou acesse diretamente:<br>
+                  <a href="{reset_link}" style="color:#00B4D8;text-decoration:none;word-break:break-all;">{reset_link}</a>
+                </p>
+              </td>
+            </tr>
+
           </td>
         </tr>
-
-        <!-- Divider -->
-        <tr><td style="padding:0 40px;"><div style="height:1px;background:#2a2a2a;"></div></td></tr>
 
         <!-- Footer -->
         <tr>
-          <td style="padding:24px 40px;text-align:center;">
-            <p style="color:#444444;font-size:12px;margin:0 0 6px;">&copy; {year} MatheusPersonal. Todos os direitos reservados.</p>
-            <p style="color:#444444;font-size:12px;margin:0;">Este e um e-mail automatico, nao responda.</p>
+          <td style="padding:32px 0 0;text-align:center;">
+            <p style="color:#374151;font-size:12px;margin:0 0 4px;">&copy; {year} MatheusPersonal. Todos os direitos reservados.</p>
+            <p style="color:#374151;font-size:12px;margin:0;">Este e um e-mail automatico, nao responda.</p>
           </td>
         </tr>
 
