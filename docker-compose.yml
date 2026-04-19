@@ -288,15 +288,27 @@ services:
       - progress_uploads:/app/uploads
     labels:
       - "traefik.enable=true"
+      # Rota principal: /api/aluno/progress
+      - "traefik.http.routers.mp-ms-progress.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/progress`)"
+      - "traefik.http.routers.mp-ms-progress.entrypoints=https"
+      - "traefik.http.routers.mp-ms-progress.tls=true"
+      - "traefik.http.routers.mp-ms-progress.middlewares=mp-strip-progress,mp-cors-progress"
+      - "traefik.http.routers.mp-ms-progress.service=mp-ms-progress"
       - "traefik.http.middlewares.mp-strip-progress.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.middlewares.mp-strip-progress-uploads.stripprefix.prefixes=/api/aluno"
-      - "traefik.http.routers.mp-ms-progress.middlewares=mp-strip-progress,mp-cors"
+      # Rota uploads: /uploads (sem strip)
       - "traefik.http.routers.mp-ms-progress-uploads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/uploads`)"
       - "traefik.http.routers.mp-ms-progress-uploads.entrypoints=https"
       - "traefik.http.routers.mp-ms-progress-uploads.tls=true"
-      - "traefik.http.routers.mp-ms-progress-uploads.middlewares=mp-cors"
+      - "traefik.http.routers.mp-ms-progress-uploads.middlewares=mp-cors-progress"
       - "traefik.http.routers.mp-ms-progress-uploads.service=mp-ms-progress"
-      - "traefik.http.routers.mp-ms-progress.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/progress`)"
+      # CORS dedicado para progress (evita dependência do middleware do users-service)
+      - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolalloworiginlist=https://www.matheuspersonal.com.br,https://matheuspersonal.com.br,https://srv1023256.hstgr.cloud"
+      - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolallowheaders=Content-Type,Authorization,Accept,X-Requested-With"
+      - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolmaxage=86400"
+      - "traefik.http.middlewares.mp-cors-progress.headers.addvaryheader=true"
+      - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolallowcredentials=true"
+      # Serviço
       - "traefik.http.services.mp-ms-progress.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
