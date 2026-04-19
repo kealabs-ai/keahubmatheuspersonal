@@ -99,8 +99,17 @@ def get_all_records(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
+    # Busca o maior peso registrado por exercício nos logs do aluno
     cursor.execute(
-        "SELECT * FROM personal_records WHERE user_id=%s ORDER BY exercise_name, recorded_at",
+        """SELECT e.name as exercise_name,
+                  MAX(el.weight_kg) as weight_kg,
+                  COUNT(el.id) as total_sets
+           FROM exercise_logs el
+           JOIN exercises e ON e.id = el.exercise_id
+           JOIN workout_logs wl ON wl.id = el.log_id
+           WHERE wl.user_id = %s AND el.weight_kg IS NOT NULL AND el.weight_kg > 0
+           GROUP BY e.name
+           ORDER BY e.name ASC""",
         (user_id,)
     )
     records = cursor.fetchall()
@@ -113,18 +122,26 @@ def get_strength(exercise: str, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
+    # Histórico de carga por exercício agrupado por data
     cursor.execute(
-        """SELECT DATE_FORMAT(recorded_at, '%%Y-%%m') as date, MAX(weight_kg) as weight
-           FROM personal_records WHERE user_id=%s AND exercise_name=%s
-           GROUP BY DATE_FORMAT(recorded_at, '%%Y-%%m') ORDER BY date""",
+        """SELECT DATE_FORMAT(wl.finished_at, '%Y-%m-%d') as date,
+                  MAX(el.weight_kg) as weight
+           FROM exercise_logs el
+           JOIN exercises e ON e.id = el.exercise_id
+           JOIN workout_logs wl ON wl.id = el.log_id
+           WHERE wl.user_id = %s AND e.name = %s
+             AND el.weight_kg IS NOT NULL AND el.weight_kg > 0
+             AND wl.finished_at IS NOT NULL
+           GROUP BY DATE_FORMAT(wl.finished_at, '%Y-%m-%d')
+           ORDER BY date ASC""",
         (user_id, exercise)
     )
     data = cursor.fetchall()
     cursor.close(); conn.close()
     if not data:
-        raise HTTPException(404, "Nenhum registro encontrado")
+        return {"exercise": exercise, "data": [], "record": 0, "gain": 0}
     record = float(max(r["weight"] for r in data))
-    gain = round(record - float(data[0]["weight"]), 1)
+    gain   = round(record - float(data[0]["weight"]), 1)
     return {"exercise": exercise, "data": data, "record": record, "gain": gain}
 
 
