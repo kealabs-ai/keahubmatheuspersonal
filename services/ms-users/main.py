@@ -1,11 +1,16 @@
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date
-import sys, os, bcrypt, jwt
+import sys, os, bcrypt, jwt, base64, uuid, re
 sys.path.append('..')
 from database import get_db
+
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads/avatars")
+BASE_URL    = os.getenv("BASE_URL", "https://srv1023256.hstgr.cloud")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 ALLOWED_ORIGINS = [
     "https://www.matheuspersonal.com.br",
@@ -17,6 +22,7 @@ JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
 
 def get_user_id(authorization: str) -> int:
@@ -67,6 +73,9 @@ class MetricsInput(BaseModel):
 
 class FeedbackInput(BaseModel):
     message: str
+
+class AvatarInput(BaseModel):
+    avatar_base64: str   # data:image/jpeg;base64,... ou base64 puro
 
 
 class AdminUpdateUser(BaseModel):
@@ -184,6 +193,43 @@ def send_feedback(body: FeedbackInput, authorization: str = Header(...)):
     fb_id = cursor.lastrowid
     cursor.close(); conn.close()
     return {"id": fb_id, "message": "Feedback enviado com sucesso."}
+
+
+@app.post("/users/me/avatar")
+def upload_avatar(body: AvatarInput, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+
+    match = re.match(r"data:(image/\w+);base64,(.+)", body.avatar_base64)
+    if match:
+        mime, b64_data = match.group(1), match.group(2)
+    else:
+        mime, b64_data = "image/jpeg", body.avatar_base64
+
+    ext = mime.split("/")[1]
+    if ext not in ("jpeg", "jpg", "png", "webp"):
+        raise HTTPException(400, "Formato inválido. Use jpeg, png ou webp.")
+
+    try:
+        image_bytes = base64.b64decode(b64_data)
+    except Exception:
+        raise HTTPException(400, "Base64 inválido")
+
+    if len(image_bytes) > 5 * 1024 * 1024:
+        raise HTTPException(400, "Imagem muito grande. Máximo 5MB.")
+
+    filename  = f"avatar_{user_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath  = os.path.join(UPLOAD_DIR, filename)
+    with open(filepath, "wb") as f:
+        f.write(image_bytes)
+
+    avatar_url = f"{BASE_URL}/uploads/avatars/{filename}"
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET avatar_url=%s WHERE id_user=%s", (avatar_url, user_id))
+    conn.commit()
+    cursor.close(); conn.close()
+    return {"avatar_url": avatar_url, "message": "Avatar atualizado com sucesso."}
 
 
 @app.post("/users/admin/{user_id}")
