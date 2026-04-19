@@ -199,18 +199,30 @@ def send_feedback(body: FeedbackInput, authorization: str = Header(...)):
 def upload_avatar(body: AvatarInput, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
 
-    match = re.match(r"data:(image/\w+);base64,(.+)", body.avatar_base64)
+    # Se for URL direta (avatar preset), salva direto no banco sem upload
+    avatar_b64 = body.avatar_base64.strip()
+    if avatar_b64.startswith('http://') or avatar_b64.startswith('https://'):
+        avatar_url = avatar_b64
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET avatar_url=%s WHERE id_user=%s", (avatar_url, user_id))
+        conn.commit()
+        cursor.close(); conn.close()
+        return {"avatar_url": avatar_url, "message": "Avatar atualizado com sucesso."}
+
+    # Upload de arquivo base64
+    match = re.match(r"data:(image/[\w+]+);base64,(.+)", avatar_b64, re.DOTALL)
     if match:
         mime, b64_data = match.group(1), match.group(2)
     else:
-        mime, b64_data = "image/jpeg", body.avatar_base64
+        mime, b64_data = "image/jpeg", avatar_b64
 
-    ext = mime.split("/")[1]
-    if ext not in ("jpeg", "jpg", "png", "webp"):
-        raise HTTPException(400, "Formato inválido. Use jpeg, png ou webp.")
+    ext = mime.split("/")[1].replace("jpeg", "jpg").replace("+xml", "")
+    if ext not in ("jpg", "jpeg", "png", "webp", "svg"):
+        ext = "jpg"
 
     try:
-        image_bytes = base64.b64decode(b64_data)
+        image_bytes = base64.b64decode(b64_data.strip())
     except Exception:
         raise HTTPException(400, "Base64 inválido")
 
