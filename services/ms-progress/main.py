@@ -150,10 +150,60 @@ def get_measurements(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM body_metrics WHERE user_id=%s ORDER BY recorded_at DESC", (user_id,))
+    cursor.execute(
+        "SELECT * FROM body_metrics WHERE user_id=%s ORDER BY recorded_at ASC",
+        (user_id,)
+    )
     data = cursor.fetchall()
     cursor.close(); conn.close()
-    return {"measurements": data}
+
+    FIELDS = {
+        'weight':   ('Peso',       'kg'),
+        'height':   ('Altura',     'cm'),
+        'body_fat': ('% Gordura',  '%'),
+        'waist':    ('Cintura',    'cm'),
+        'arm':      ('Braço',      'cm'),
+        'leg':      ('Perna',      'cm'),
+        'chest':    ('Peito',      'cm'),
+    }
+
+    if not data:
+        return {"measurements": [], "history": []}
+
+    latest = data[-1]
+    first  = data[0]
+
+    # Cards com valor atual, inicial e diff
+    cards = []
+    for key, (label, unit) in FIELDS.items():
+        val = latest.get(key)
+        if val is None:
+            continue
+        val     = float(val)
+        val_ini = float(first.get(key) or val)
+        diff    = round(val - val_ini, 1)
+        diff_str = f"+{diff} {unit}" if diff > 0 else f"{diff} {unit}" if diff != 0 else None
+        cards.append({
+            'label':       label,
+            'unit':        unit,
+            'value':       val,
+            'initial':     val_ini,
+            'diff':        diff_str,
+            'recorded_at': str(latest.get('recorded_at', '')),
+        })
+
+    # Histórico completo para gráficos
+    history = [{
+        'recorded_at': str(r.get('recorded_at', '')),
+        'weight':   float(r['weight'])   if r.get('weight')   else None,
+        'body_fat': float(r['body_fat']) if r.get('body_fat') else None,
+        'waist':    float(r['waist'])    if r.get('waist')    else None,
+        'arm':      float(r['arm'])      if r.get('arm')      else None,
+        'leg':      float(r['leg'])      if r.get('leg')      else None,
+        'chest':    float(r['chest'])    if r.get('chest')    else None,
+    } for r in data]
+
+    return {"measurements": cards, "history": history}
 
 
 @app.get("/progress/photos")
