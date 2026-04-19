@@ -116,10 +116,13 @@ def get_me(authorization: str = Header(...)):
         cursor.close(); conn.close()
         raise HTTPException(404, "Usuário não encontrado")
     cursor.execute(
-        "SELECT weight, height, body_fat, waist, arm, leg, recorded_at FROM body_metrics WHERE user_id=%s ORDER BY recorded_at DESC LIMIT 1",
+        "SELECT weight, height, body_fat, waist, arm, leg, recorded_at FROM body_metrics WHERE user_id=%s ORDER BY id DESC LIMIT 1",
         (user_id,)
     )
-    user["latest_metrics"] = cursor.fetchone()
+    lm = cursor.fetchone()
+    if lm and hasattr(lm.get('recorded_at'), 'isoformat'):
+        lm['recorded_at'] = lm['recorded_at'].isoformat()
+    user["latest_metrics"] = lm
     cursor.close(); conn.close()
     return user
 
@@ -162,7 +165,7 @@ def get_metrics(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM body_metrics WHERE user_id=%s ORDER BY recorded_at DESC", (user_id,))
+    cursor.execute("SELECT * FROM body_metrics WHERE user_id=%s ORDER BY id DESC", (user_id,))
     metrics = cursor.fetchall()
     cursor.close(); conn.close()
     return {"metrics": metrics}
@@ -172,19 +175,21 @@ def get_metrics(authorization: str = Header(...)):
 def add_metrics(body: MetricsInput, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     cursor.execute(
         "INSERT INTO body_metrics (user_id, weight, height, body_fat, waist, arm, leg, chest, recorded_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         (user_id, body.weight, body.height, body.body_fat, body.waist, body.arm, body.leg, body.chest, body.recorded_at)
     )
     conn.commit()
     metric_id = cursor.lastrowid
-    # Retorna as métricas recém salvas para o frontend atualizar
     cursor.execute(
         "SELECT weight, height, body_fat, waist, arm, leg, recorded_at FROM body_metrics WHERE id=%s",
         (metric_id,)
     )
     saved = cursor.fetchone()
+    # Converte recorded_at para string se for objeto date
+    if saved and hasattr(saved.get('recorded_at'), 'isoformat'):
+        saved['recorded_at'] = saved['recorded_at'].isoformat()
     cursor.close(); conn.close()
     return {"id": metric_id, "message": "Medição registrada com sucesso.", "metrics": saved}
 
