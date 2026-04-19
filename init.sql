@@ -166,6 +166,15 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS role ENUM('student','admin','nutritionist','trainer') DEFAULT 'student',
   ADD COLUMN IF NOT EXISTS active TINYINT(1) DEFAULT 1;
 
+CREATE TABLE IF NOT EXISTS reset_tokens (
+  id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  token      VARCHAR(100) NOT NULL UNIQUE,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id_user) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS refresh_tokens (
   id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id    INT NOT NULL,
