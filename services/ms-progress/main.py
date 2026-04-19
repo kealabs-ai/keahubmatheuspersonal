@@ -52,19 +52,32 @@ def get_weight(period: str = Query("6m"), authorization: str = Header(...)):
     months = PERIOD_MONTHS.get(period, 6)
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
+    # Retorna registros individuais ordenados por data
     cursor.execute(
-        """SELECT DATE_FORMAT(recorded_at, '%%Y-%%m') as date, AVG(weight_kg) as weight
-           FROM weight_history WHERE user_id=%s AND recorded_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
-           GROUP BY DATE_FORMAT(recorded_at, '%%Y-%%m') ORDER BY date""",
+        """SELECT DATE_FORMAT(recorded_at, '%%Y-%%m-%%d') as date,
+                  weight_kg as weight, recorded_at
+           FROM weight_history
+           WHERE user_id=%s AND recorded_at >= DATE_SUB(NOW(), INTERVAL %s MONTH)
+           ORDER BY recorded_at ASC""",
         (user_id, months)
     )
     data = cursor.fetchall()
     cursor.close(); conn.close()
     if not data:
         return {"data": [], "summary": {}}
-    start = float(data[0]["weight"])
+    start   = float(data[0]["weight"])
     current = float(data[-1]["weight"])
-    return {"data": data, "summary": {"start": start, "current": current, "diff": round(current - start, 1)}}
+    avg     = round(sum(float(r["weight"]) for r in data) / len(data), 1)
+    return {
+        "data": data,
+        "summary": {
+            "start":   start,
+            "current": current,
+            "diff":    round(current - start, 1),
+            "avg":     avg,
+            "total":   len(data),
+        }
+    }
 
 
 @app.post("/progress/weight", status_code=201)
