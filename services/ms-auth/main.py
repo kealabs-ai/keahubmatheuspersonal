@@ -45,7 +45,7 @@ def login(body: LoginRequest):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, password, plan, COALESCE(role,'student') as role, COALESCE(active,1) as active FROM users WHERE email=%s",
+        "SELECT id_user as id, name, email, password, plan, COALESCE(role,'student') as role, COALESCE(active,1) as active, avatar_url FROM users WHERE email=%s",
         (body.email,)
     )
     user = cursor.fetchone()
@@ -81,7 +81,7 @@ def login(body: LoginRequest):
         "access_token": access_token,
         "refresh_token": refresh_token,
         "expires_in": JWT_EXPIRE,
-        "user": {"id": user["id"], "name": user["name"], "plan": user["plan"], "role": user["role"]}
+        "user": {"id": user["id"], "name": user["name"], "plan": user["plan"], "role": user["role"], "avatar_url": user.get("avatar_url")}
     }
 
 
