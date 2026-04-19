@@ -179,8 +179,14 @@ def add_metrics(body: MetricsInput, authorization: str = Header(...)):
     )
     conn.commit()
     metric_id = cursor.lastrowid
+    # Retorna as métricas recém salvas para o frontend atualizar
+    cursor.execute(
+        "SELECT weight, height, body_fat, waist, arm, leg, recorded_at FROM body_metrics WHERE id=%s",
+        (metric_id,)
+    )
+    saved = cursor.fetchone()
     cursor.close(); conn.close()
-    return {"id": metric_id, "message": "Medição registrada com sucesso."}
+    return {"id": metric_id, "message": "Medição registrada com sucesso.", "metrics": saved}
 
 
 @app.post("/users/me/feedback", status_code=201)
