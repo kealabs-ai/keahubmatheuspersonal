@@ -102,9 +102,20 @@ def delete_coupon(coupon_id: int):
     return {"message": "Cupão desativado com sucesso."}
 
 
+class ValidateCouponBody(BaseModel):
+    code: str
+
+
 @app.get("/coupons/validate")
-def validate_coupon_by_query(code: str):
-    return validate_coupon(code)
+def validate_coupon_by_query(code: str = None):
+    if not code:
+        raise HTTPException(422, "Parâmetro 'code' é obrigatório")
+    return validate_coupon(code.upper())
+
+
+@app.post("/coupons/validate")
+def validate_coupon_by_body(body: ValidateCouponBody):
+    return validate_coupon(body.code.upper())
 
 
 @app.get("/coupons/{code}")
@@ -112,9 +123,9 @@ def validate_coupon(code: str):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT * FROM coupons WHERE code=%s AND is_active=1
+        """SELECT * FROM coupons WHERE UPPER(code)=%s AND is_active=1
            AND valid_from <= CURDATE() AND valid_until >= CURDATE()""",
-        (code,)
+        (code.upper(),)
     )
     coupon = cursor.fetchone()
     cursor.close(); conn.close()
