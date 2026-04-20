@@ -102,6 +102,11 @@ def delete_coupon(coupon_id: int):
     return {"message": "Cupão desativado com sucesso."}
 
 
+@app.get("/coupons/validate")
+def validate_coupon_by_query(code: str):
+    return validate_coupon(code)
+
+
 @app.get("/coupons/{code}")
 def validate_coupon(code: str):
     conn = get_db()
