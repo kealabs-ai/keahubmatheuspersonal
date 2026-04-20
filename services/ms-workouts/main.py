@@ -373,11 +373,38 @@ def get_active_plan(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
+    # Busca o objetivo do usuário
+    cursor.execute("SELECT goal FROM users WHERE id_user=%s", (user_id,))
+    user_row = cursor.fetchone()
+    user_goal = user_row["goal"] if user_row else None
+
+    # Busca o template via ciclo ativo do aluno
     cursor.execute(
-        "SELECT id as template_id, name as template_name, goal, level"
-        " FROM workout_templates WHERE active=1 ORDER BY id DESC LIMIT 1"
+        """SELECT wt.id as template_id, wt.name as template_name, wt.goal, wt.level
+           FROM workout_cycles wc
+           JOIN workout_plans wp ON wp.cycle_id = wc.id
+           JOIN workout_templates wt ON wt.id = wp.template_id
+           WHERE wc.user_id=%s AND wc.active=1
+           LIMIT 1""",
+        (user_id,)
     )
     plan = cursor.fetchone()
+
+    # Fallback: busca template pelo objetivo do usuário
+    if not plan and user_goal:
+        cursor.execute(
+            "SELECT id as template_id, name as template_name, goal, level FROM workout_templates WHERE goal=%s AND active=1 ORDER BY id DESC LIMIT 1",
+            (user_goal,)
+        )
+        plan = cursor.fetchone()
+
+    # Fallback final: qualquer template ativo
+    if not plan:
+        cursor.execute(
+            "SELECT id as template_id, name as template_name, goal, level FROM workout_templates WHERE active=1 ORDER BY id DESC LIMIT 1"
+        )
+        plan = cursor.fetchone()
+
     if not plan:
         cursor.close(); conn.close()
         raise HTTPException(404, "Nenhum plano ativo encontrado")
@@ -403,7 +430,8 @@ def get_active_plan(authorization: str = Header(...)):
         d["status"] = day_status(d["week_day"], completed_days)
 
     cursor.close(); conn.close()
-    plan["days"] = days
+    plan["days"]      = days
+    plan["user_goal"] = user_goal
     return {"plan": plan}
 
 
