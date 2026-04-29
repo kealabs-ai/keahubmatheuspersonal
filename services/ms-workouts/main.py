@@ -48,11 +48,13 @@ def require_admin(authorization: str) -> int:
 class CreateTemplate(BaseModel):
     name: str
     goal: str
+    description: Optional[str] = None
     level: Optional[str] = "Iniciante"
 
 class UpdateTemplate(BaseModel):
     name: Optional[str] = None
     goal: Optional[str] = None
+    description: Optional[str] = None
     level: Optional[str] = None
     active: Optional[bool] = None
 
@@ -74,6 +76,7 @@ class CreateExercise(BaseModel):
     rest_seconds: Optional[int] = None
     muscle_group: Optional[str] = None
     video_url: Optional[str] = None
+    notes: Optional[str] = None
 
 class UpdateExercise(BaseModel):
     name: Optional[str] = None
@@ -82,6 +85,7 @@ class UpdateExercise(BaseModel):
     rest_seconds: Optional[int] = None
     muscle_group: Optional[str] = None
     video_url: Optional[str] = None
+    notes: Optional[str] = None
 
 class CreateCycle(BaseModel):
     user_id: int
@@ -127,8 +131,8 @@ def create_template(body: CreateTemplate, authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO workout_templates (trainer_id, name, goal, level) VALUES (%s,%s,%s,%s)",
-        (trainer_id, body.name, body.goal, body.level)
+        "INSERT INTO workout_templates (trainer_id, name, goal, description, level) VALUES (%s,%s,%s,%s,%s)",
+        (trainer_id, body.name, body.goal, body.description, body.level)
     )
     conn.commit()
     template_id = cursor.lastrowid
@@ -142,7 +146,7 @@ def list_templates(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT t.id, t.name, t.goal, t.level, t.active, u.name as trainer_name, t.created_at
+        """SELECT t.id, t.name, t.goal, t.description, t.level, t.active, u.name as trainer_name, t.created_at
            FROM workout_templates t JOIN users u ON u.id_user = t.trainer_id
            ORDER BY t.created_at DESC"""
     )
@@ -257,8 +261,8 @@ def create_exercise(day_id: int, body: CreateExercise, authorization: str = Head
     cursor.execute("SELECT COUNT(*) as cnt FROM exercises WHERE day_id=%s", (day_id,))
     sort_order = cursor.fetchone()["cnt"] + 1
     cursor.execute(
-        "INSERT INTO exercises (day_id, name, muscle_group, sets, reps, rest_seconds, video_url, sort_order) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-        (day_id, body.name, body.muscle_group, body.sets, body.reps, body.rest_seconds, body.video_url, sort_order)
+        "INSERT INTO exercises (day_id, name, muscle_group, sets, reps, rest_seconds, video_url, notes, sort_order) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        (day_id, body.name, body.muscle_group, body.sets, body.reps, body.rest_seconds, body.video_url, body.notes, sort_order)
     )
     conn.commit()
     exercise_id = cursor.lastrowid
