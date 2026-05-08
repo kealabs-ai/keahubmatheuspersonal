@@ -50,7 +50,7 @@ class CreateTemplate(BaseModel):
     goal: str
     description: Optional[str] = None
     level: Optional[str] = "Iniciante"
-    gender: Optional[str] = "ambos"
+    gender: Optional[str] = "masculino"
 
 class UpdateTemplate(BaseModel):
     name: Optional[str] = None
@@ -386,7 +386,7 @@ def get_active_plan(authorization: str = Header(...)):
 
     # Busca o template via ciclo ativo do aluno
     cursor.execute(
-        """SELECT wt.id as template_id, wt.name as template_name, wt.goal, wt.level
+        """SELECT wt.id as template_id, wt.name as template_name, wt.goal, wt.level, wt.gender
            FROM workout_cycles wc
            JOIN workout_plans wp ON wp.cycle_id = wc.id
            JOIN workout_templates wt ON wt.id = wp.template_id
@@ -399,7 +399,7 @@ def get_active_plan(authorization: str = Header(...)):
     # Fallback: busca template pelo objetivo do usuário
     if not plan and user_goal:
         cursor.execute(
-            "SELECT id as template_id, name as template_name, goal, level FROM workout_templates WHERE goal=%s AND active=1 ORDER BY id DESC LIMIT 1",
+            "SELECT id as template_id, name as template_name, goal, level, gender FROM workout_templates WHERE goal=%s AND active=1 ORDER BY id DESC LIMIT 1",
             (user_goal,)
         )
         plan = cursor.fetchone()
@@ -407,7 +407,7 @@ def get_active_plan(authorization: str = Header(...)):
     # Fallback final: qualquer template ativo
     if not plan:
         cursor.execute(
-            "SELECT id as template_id, name as template_name, goal, level FROM workout_templates WHERE active=1 ORDER BY id DESC LIMIT 1"
+            "SELECT id as template_id, name as template_name, goal, level, gender FROM workout_templates WHERE active=1 ORDER BY id DESC LIMIT 1"
         )
         plan = cursor.fetchone()
 
