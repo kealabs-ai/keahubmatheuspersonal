@@ -261,7 +261,7 @@ services:
       - "traefik.http.routers.mp-ms-users-uploads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/uploads/avatars`)"
       - "traefik.http.routers.mp-ms-users-uploads.entrypoints=https"
       - "traefik.http.routers.mp-ms-users-uploads.tls=true"
-      - "traefik.http.routers.mp-ms-users-uploads.middlewares=mp-cors"
+      - "traefik.http.routers.mp-ms-users-uploads.middlewares=mp-cors-aluno"
       - "traefik.http.routers.mp-ms-users-uploads.service=mp-ms-users"
     deploy:
       replicas: 1
