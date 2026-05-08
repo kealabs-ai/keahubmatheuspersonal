@@ -56,6 +56,7 @@ class UpdateProfile(BaseModel):
     phone: Optional[str] = None
     birthdate: Optional[date] = None
     goal: Optional[str] = None
+    gender: Optional[str] = None
     recurring_billing: Optional[bool] = None
 
 class ChangePassword(BaseModel):
@@ -109,7 +110,7 @@ def get_me(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, phone, birth_date, goal, plan, plan_start, plan_renewal, avatar_url, COALESCE(recurring_billing, 0) as recurring_billing FROM users WHERE id_user=%s",
+        "SELECT id_user as id, name, email, phone, birth_date, goal, plan, plan_start, plan_renewal, avatar_url, COALESCE(recurring_billing, 0) as recurring_billing, gender FROM users WHERE id_user=%s",
         (user_id,)
     )
     user = cursor.fetchone()
@@ -133,7 +134,13 @@ def update_me(body: UpdateProfile, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor()
-    fields = {"birth_date" if k == "birthdate" else k: v for k, v in body.model_dump().items() if v is not None}    if not fields:
+    fields = {
+        ("birth_date" if k == "birthdate" else k): v
+        for k, v in body.model_dump().items()
+        if v is not None and k != "recurring_billing"
+    }
+    if "recurring_billing" in body.model_dump() and body.recurring_billing is not None:
+        fields["recurring_billing"] = 1 if body.recurring_billing else 0    if not fields:
         cursor.close(); conn.close()
         return {"message": "Nenhum campo para atualizar"}
     set_clause = ", ".join(f"{k}=%s" for k in fields)
