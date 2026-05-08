@@ -51,6 +51,9 @@ def require_admin(authorization: str) -> int:
     return user_id
 
 
+VALID_GENDERS = ("masculino", "feminino")
+VALID_GOALS   = ("Hipertrofia", "Emagrecimento", "Condicionamento", "Saúde Geral", "Performance")
+
 class UpdateProfile(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
@@ -87,6 +90,7 @@ class AdminUpdateUser(BaseModel):
     plan_start: Optional[date] = None
     plan_renewal: Optional[date] = None
     goal: Optional[str] = None
+    gender: Optional[str] = None
     active: Optional[int] = None
     role: Optional[str] = None
 
@@ -110,7 +114,7 @@ def get_me(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, phone, birth_date, goal, plan, plan_start, plan_renewal, avatar_url, COALESCE(recurring_billing, 0) as recurring_billing, gender FROM users WHERE id_user=%s",
+        "SELECT id_user as id, name, email, phone, birth_date, goal, gender, plan, plan_start, plan_renewal, avatar_url, COALESCE(recurring_billing, 0) as recurring_billing FROM users WHERE id_user=%s",
         (user_id,)
     )
     user = cursor.fetchone()
@@ -132,6 +136,12 @@ def get_me(authorization: str = Header(...)):
 @app.post("/users/me/update")
 def update_me(body: UpdateProfile, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
+
+    if body.gender is not None and body.gender not in VALID_GENDERS:
+        raise HTTPException(400, f"gender inválido. Use: {VALID_GENDERS}")
+    if body.goal is not None and body.goal not in VALID_GOALS:
+        raise HTTPException(400, f"goal inválido. Use: {VALID_GOALS}")
+
     conn = get_db()
     cursor = conn.cursor()
     fields = {
@@ -139,15 +149,16 @@ def update_me(body: UpdateProfile, authorization: str = Header(...)):
         for k, v in body.model_dump().items()
         if v is not None and k != "recurring_billing"
     }
-    if "recurring_billing" in body.model_dump() and body.recurring_billing is not None:
-        fields["recurring_billing"] = 1 if body.recurring_billing else 0    if not fields:
+    if body.recurring_billing is not None:
+        fields["recurring_billing"] = 1 if body.recurring_billing else 0
+    if not fields:
         cursor.close(); conn.close()
         return {"message": "Nenhum campo para atualizar"}
     set_clause = ", ".join(f"{k}=%s" for k in fields)
     cursor.execute(f"UPDATE users SET {set_clause} WHERE id_user=%s", (*fields.values(), user_id))
     conn.commit()
     cursor.close(); conn.close()
-    return {"message": "Perfil atualizado com sucesso."}
+    return {"message": "Perfil atualizado com sucesso.", "updated": list(fields.keys())}
 
 
 @app.post("/users/me/password")
@@ -265,6 +276,12 @@ def upload_avatar(body: AvatarInput, authorization: str = Header(...)):
 @app.post("/users/admin/{user_id}")
 def admin_update_user(user_id: int, body: AdminUpdateUser, authorization: str = Header(...)):
     require_admin(authorization)
+
+    if body.gender is not None and body.gender not in VALID_GENDERS:
+        raise HTTPException(400, f"gender inválido. Use: {VALID_GENDERS}")
+    if body.goal is not None and body.goal not in VALID_GOALS:
+        raise HTTPException(400, f"goal inválido. Use: {VALID_GOALS}")
+
     conn = get_db()
     cursor = conn.cursor()
     fields = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -275,7 +292,7 @@ def admin_update_user(user_id: int, body: AdminUpdateUser, authorization: str = 
     cursor.execute(f"UPDATE users SET {set_clause} WHERE id_user=%s", (*fields.values(), user_id))
     conn.commit()
     cursor.close(); conn.close()
-    return {"message": "Usuário atualizado com sucesso."}
+    return {"message": "Usuário atualizado com sucesso.", "updated": list(fields.keys())}
 
 
 @app.post("/users/me/recurring-billing")

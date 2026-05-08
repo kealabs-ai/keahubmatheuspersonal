@@ -159,10 +159,12 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255),
   ADD COLUMN IF NOT EXISTS birthdate DATE,
   ADD COLUMN IF NOT EXISTS goal ENUM('Hipertrofia','Emagrecimento','Condicionamento','Saúde Geral','Performance') DEFAULT 'Hipertrofia',
+  ADD COLUMN IF NOT EXISTS gender ENUM('masculino','feminino') DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS plan ENUM('BRONZE','PRATA','OURO','DIAMANTE') DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS plan_start DATE,
   ADD COLUMN IF NOT EXISTS plan_renewal DATE,
   ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500),
+  ADD COLUMN IF NOT EXISTS recurring_billing TINYINT(1) DEFAULT 0,
   ADD COLUMN IF NOT EXISTS role ENUM('student','admin','nutritionist','trainer') DEFAULT 'student',
   ADD COLUMN IF NOT EXISTS active TINYINT(1) DEFAULT 1;
 
