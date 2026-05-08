@@ -150,7 +150,7 @@ def list_templates(authorization: str = Header(...)):
     cursor.execute(
         """SELECT t.id, t.name, t.goal, t.description, t.level, t.gender, t.active, u.name as trainer_name, t.created_at
            FROM workout_templates t JOIN users u ON u.id_user = t.trainer_id
-           ORDER BY t.created_at DESC"""
+           ORDER BY t.id ASC"""
     )
     templates = cursor.fetchall()
     cursor.close(); conn.close()

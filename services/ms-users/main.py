@@ -56,6 +56,7 @@ class UpdateProfile(BaseModel):
     phone: Optional[str] = None
     birthdate: Optional[date] = None
     goal: Optional[str] = None
+    recurring_billing: Optional[bool] = None
 
 class ChangePassword(BaseModel):
     current_password: str
@@ -108,7 +109,7 @@ def get_me(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, phone, birth_date, goal, plan, plan_start, plan_renewal, avatar_url FROM users WHERE id_user=%s",
+        "SELECT id_user as id, name, email, phone, birth_date, goal, plan, plan_start, plan_renewal, avatar_url, COALESCE(recurring_billing, 0) as recurring_billing FROM users WHERE id_user=%s",
         (user_id,)
     )
     user = cursor.fetchone()
@@ -132,8 +133,7 @@ def update_me(body: UpdateProfile, authorization: str = Header(...)):
     user_id = get_user_id(authorization)
     conn = get_db()
     cursor = conn.cursor()
-    fields = {"birth_date" if k == "birthdate" else k: v for k, v in body.model_dump().items() if v is not None}
-    if not fields:
+    fields = {"birth_date" if k == "birthdate" else k: v for k, v in body.model_dump().items() if v is not None}    if not fields:
         cursor.close(); conn.close()
         return {"message": "Nenhum campo para atualizar"}
     set_clause = ", ".join(f"{k}=%s" for k in fields)
@@ -269,3 +269,32 @@ def admin_update_user(user_id: int, body: AdminUpdateUser, authorization: str = 
     conn.commit()
     cursor.close(); conn.close()
     return {"message": "Usuário atualizado com sucesso."}
+
+
+@app.post("/users/me/recurring-billing")
+def set_recurring_billing(authorization: str = Header(...), enabled: bool = True):
+    user_id = get_user_id(authorization)
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET recurring_billing=%s WHERE id_user=%s", (1 if enabled else 0, user_id))
+    conn.commit()
+    cursor.close(); conn.close()
+    return {"message": "Preferência de cobrança recorrente atualizada.", "recurring_billing": enabled}
+
+
+@app.get("/users/recurring-billing/due")
+def get_due_recurring(authorization: str = Header(...)):
+    """Retorna alunos com cobrança recorrente ativa e plano vencendo hoje ou já vencido."""
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT id_user, name, email, plan, plan_renewal
+           FROM users
+           WHERE recurring_billing = 1
+             AND active = 1
+             AND plan_renewal <= CURDATE()"""
+    )
+    users = cursor.fetchall()
+    cursor.close(); conn.close()
+    return {"users": users, "total": len(users)}
