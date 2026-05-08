@@ -68,6 +68,7 @@ class CreateTemplateDay(BaseModel):
 
 class UpdateTemplateDay(BaseModel):
     name: Optional[str] = None
+    week_day: Optional[int] = None
     duration_min: Optional[int] = None
     is_rest: Optional[bool] = None
 
