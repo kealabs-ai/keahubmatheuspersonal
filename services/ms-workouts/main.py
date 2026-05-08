@@ -50,6 +50,7 @@ class CreateTemplate(BaseModel):
     goal: str
     description: Optional[str] = None
     level: Optional[str] = "Iniciante"
+    gender: Optional[str] = "ambos"
 
 class UpdateTemplate(BaseModel):
     name: Optional[str] = None
@@ -57,6 +58,7 @@ class UpdateTemplate(BaseModel):
     description: Optional[str] = None
     level: Optional[str] = None
     active: Optional[bool] = None
+    gender: Optional[str] = None
 
 class CreateTemplateDay(BaseModel):
     name: str
@@ -131,8 +133,8 @@ def create_template(body: CreateTemplate, authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO workout_templates (trainer_id, name, goal, description, level) VALUES (%s,%s,%s,%s,%s)",
-        (trainer_id, body.name, body.goal, body.description, body.level)
+        "INSERT INTO workout_templates (trainer_id, name, goal, description, level, gender) VALUES (%s,%s,%s,%s,%s,%s)",
+        (trainer_id, body.name, body.goal, body.description, body.level, body.gender)
     )
     conn.commit()
     template_id = cursor.lastrowid
@@ -146,7 +148,7 @@ def list_templates(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT t.id, t.name, t.goal, t.description, t.level, t.active, u.name as trainer_name, t.created_at
+        """SELECT t.id, t.name, t.goal, t.description, t.level, t.gender, t.active, u.name as trainer_name, t.created_at
            FROM workout_templates t JOIN users u ON u.id_user = t.trainer_id
            ORDER BY t.created_at DESC"""
     )
