@@ -375,16 +375,52 @@ def get_active_plan(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    # Busca o objetivo e data de cadastro do usuário
-    cursor.execute("SELECT goal, created_at FROM users WHERE id_user=%s", (user_id,))
+    # Busca o objetivo, gênero e data de cadastro do usuário
+    cursor.execute("SELECT goal, gender, created_at FROM users WHERE id_user=%s", (user_id,))
     user_row = cursor.fetchone()
-    user_goal = user_row["goal"] if user_row else None
+    user_goal   = user_row["goal"]   if user_row else None
+    user_gender = user_row["gender"] if user_row else None
 
     # Calcula meses desde o cadastro do aluno
     months_since_register = 0
     if user_row and user_row["created_at"]:
-        delta = date.today() - user_row["created_at"].date() if hasattr(user_row["created_at"], 'date') else date.today() - user_row["created_at"]
-        months_since_register = delta.days // 30
+        created = user_row["created_at"]
+        ref_date = created.date() if hasattr(created, 'date') else created
+        months_since_register = (date.today() - ref_date).days // 30
+
+    # Helper: monta filtro de template por goal + gender + months
+    # Regra months: seleciona o template cujo months é o menor valor >= meses_do_aluno
+    # Ex: aluno com 3 meses -> pega template com months=4 (> 2 e <= 4)
+    def pick_template(cursor, goal_filter, gender_filter):
+        params = []
+        where  = ["active = 1"]
+
+        if goal_filter:
+            where.append("goal = %s")
+            params.append(goal_filter)
+
+        if gender_filter:
+            where.append("(gender = %s OR gender IS NULL)")
+            params.append(gender_filter)
+
+        where_sql = " AND ".join(where)
+
+        # Tenta encontrar o template com menor months que ainda cobre o aluno
+        # Regra: months IS NULL (sem limite) OU months >= meses_do_aluno
+        # Ordena por months ASC para pegar o mais específico primeiro
+        cursor.execute(
+            f"""SELECT id as template_id, name as template_name, goal, level, gender, months
+                FROM workout_templates
+                WHERE {where_sql}
+                  AND (months IS NULL OR months >= %s)
+                ORDER BY
+                  CASE WHEN months IS NULL THEN 1 ELSE 0 END ASC,
+                  months ASC,
+                  id ASC
+                LIMIT 1""",
+            (*params, months_since_register)
+        )
+        return cursor.fetchone()
 
     # Busca o template via ciclo ativo do aluno
     cursor.execute(
@@ -398,29 +434,23 @@ def get_active_plan(authorization: str = Header(...)):
     )
     plan = cursor.fetchone()
 
-    # Seleção automática por months: template com months >= meses do aluno, ordenado pelo menor months
-    if not plan and user_goal:
-        cursor.execute(
-            """SELECT id as template_id, name as template_name, goal, level, gender, months
-               FROM workout_templates
-               WHERE goal=%s AND active=1 AND (months IS NULL OR months >= %s)
-               ORDER BY months ASC, id ASC LIMIT 1""",
-            (user_goal, months_since_register)
-        )
-        plan = cursor.fetchone()
-
-    # Fallback: qualquer template ativo compatível com months
+    # Seleção automática: goal + gender + months
     if not plan:
-        cursor.execute(
-            """SELECT id as template_id, name as template_name, goal, level, gender, months
-               FROM workout_templates
-               WHERE active=1 AND (months IS NULL OR months >= %s)
-               ORDER BY months ASC, id ASC LIMIT 1""",
-            (months_since_register,)
-        )
-        plan = cursor.fetchone()
+        plan = pick_template(cursor, user_goal, user_gender)
 
-    # Fallback final: qualquer template ativo
+    # Fallback: goal sem filtro de gender
+    if not plan and user_goal:
+        plan = pick_template(cursor, user_goal, None)
+
+    # Fallback: só gender
+    if not plan and user_gender:
+        plan = pick_template(cursor, None, user_gender)
+
+    # Fallback final: qualquer template ativo compatível com months
+    if not plan:
+        plan = pick_template(cursor, None, None)
+
+    # Último recurso: qualquer template ativo
     if not plan:
         cursor.execute(
             "SELECT id as template_id, name as template_name, goal, level, gender, months FROM workout_templates WHERE active=1 ORDER BY id ASC LIMIT 1"
