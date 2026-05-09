@@ -28,19 +28,12 @@ def require_admin(authorization: str) -> int:
         token = authorization.split(" ")[1]
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
         user_id = payload["sub"]
+        role    = payload.get("role", "student")
     except Exception:
         raise HTTPException(401, "Token inválido")
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute("SELECT role FROM users WHERE id_user=%s", (user_id,))
-        user = cursor.fetchone()
-        if not user or user["role"] not in ("admin", "trainer"):
-            raise HTTPException(403, "Acesso restrito")
-        return user_id
-    finally:
-        cursor.close()
-        conn.close()
+    if role not in ("admin", "trainer"):
+        raise HTTPException(403, "Acesso restrito")
+    return user_id
 
 
 # ── Models ──────────────────────────────────────────────
