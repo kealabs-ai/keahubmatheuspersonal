@@ -217,8 +217,11 @@ CREATE TABLE IF NOT EXISTS workout_templates (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   trainer_id  INT UNSIGNED NOT NULL,
   name        VARCHAR(100) NOT NULL,
+  description TEXT,
   goal        ENUM('Hipertrofia','Emagrecimento','Condicionamento','Saúde Geral','Performance') NOT NULL,
   level       ENUM('Iniciante','Intermediário','Avançado') DEFAULT 'Iniciante',
+  gender      ENUM('masculino','feminino') DEFAULT NULL,
+  months      INT DEFAULT NULL,
   active      TINYINT(1) DEFAULT 1,
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (trainer_id) REFERENCES users(id_user)
