@@ -44,6 +44,7 @@ class CreateTemplate(BaseModel):
     description: Optional[str] = None
     level: Optional[str] = "Iniciante"
     gender: Optional[str] = "masculino"
+    months: Optional[int] = None
 
 class UpdateTemplate(BaseModel):
     name: Optional[str] = None
@@ -52,6 +53,7 @@ class UpdateTemplate(BaseModel):
     level: Optional[str] = None
     active: Optional[bool] = None
     gender: Optional[str] = None
+    months: Optional[int] = None
 
 class CreateTemplateDay(BaseModel):
     name: str
@@ -127,8 +129,8 @@ def create_template(body: CreateTemplate, authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO workout_templates (trainer_id, name, goal, description, level, gender) VALUES (%s,%s,%s,%s,%s,%s)",
-        (trainer_id, body.name, body.goal, body.description, body.level, body.gender)
+        "INSERT INTO workout_templates (trainer_id, name, goal, description, level, gender, months) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+        (trainer_id, body.name, body.goal, body.description, body.level, body.gender, body.months)
     )
     conn.commit()
     template_id = cursor.lastrowid
@@ -142,9 +144,9 @@ def list_templates(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT t.id, t.name, t.goal, t.description, t.level, t.gender, t.active, u.name as trainer_name, t.created_at
+        """SELECT t.id, t.name, t.goal, t.description, t.level, t.gender, t.months, t.active, u.name as trainer_name, t.created_at
            FROM workout_templates t JOIN users u ON u.id_user = t.trainer_id
-           ORDER BY t.id ASC"""
+           ORDER BY t.months ASC, t.id ASC"""
     )
     templates = cursor.fetchall()
     cursor.close(); conn.close()
@@ -373,14 +375,20 @@ def get_active_plan(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    # Busca o objetivo do usuário
-    cursor.execute("SELECT goal FROM users WHERE id_user=%s", (user_id,))
+    # Busca o objetivo e data de cadastro do usuário
+    cursor.execute("SELECT goal, created_at FROM users WHERE id_user=%s", (user_id,))
     user_row = cursor.fetchone()
     user_goal = user_row["goal"] if user_row else None
 
+    # Calcula meses desde o cadastro do aluno
+    months_since_register = 0
+    if user_row and user_row["created_at"]:
+        delta = date.today() - user_row["created_at"].date() if hasattr(user_row["created_at"], 'date') else date.today() - user_row["created_at"]
+        months_since_register = delta.days // 30
+
     # Busca o template via ciclo ativo do aluno
     cursor.execute(
-        """SELECT wt.id as template_id, wt.name as template_name, wt.goal, wt.level, wt.gender
+        """SELECT wt.id as template_id, wt.name as template_name, wt.goal, wt.level, wt.gender, wt.months
            FROM workout_cycles wc
            JOIN workout_plans wp ON wp.cycle_id = wc.id
            JOIN workout_templates wt ON wt.id = wp.template_id
@@ -390,18 +398,32 @@ def get_active_plan(authorization: str = Header(...)):
     )
     plan = cursor.fetchone()
 
-    # Fallback: busca template pelo objetivo do usuário
+    # Seleção automática por months: template com months >= meses do aluno, ordenado pelo menor months
     if not plan and user_goal:
         cursor.execute(
-            "SELECT id as template_id, name as template_name, goal, level, gender FROM workout_templates WHERE goal=%s AND active=1 ORDER BY id DESC LIMIT 1",
-            (user_goal,)
+            """SELECT id as template_id, name as template_name, goal, level, gender, months
+               FROM workout_templates
+               WHERE goal=%s AND active=1 AND (months IS NULL OR months >= %s)
+               ORDER BY months ASC, id ASC LIMIT 1""",
+            (user_goal, months_since_register)
+        )
+        plan = cursor.fetchone()
+
+    # Fallback: qualquer template ativo compatível com months
+    if not plan:
+        cursor.execute(
+            """SELECT id as template_id, name as template_name, goal, level, gender, months
+               FROM workout_templates
+               WHERE active=1 AND (months IS NULL OR months >= %s)
+               ORDER BY months ASC, id ASC LIMIT 1""",
+            (months_since_register,)
         )
         plan = cursor.fetchone()
 
     # Fallback final: qualquer template ativo
     if not plan:
         cursor.execute(
-            "SELECT id as template_id, name as template_name, goal, level, gender FROM workout_templates WHERE active=1 ORDER BY id DESC LIMIT 1"
+            "SELECT id as template_id, name as template_name, goal, level, gender, months FROM workout_templates WHERE active=1 ORDER BY id ASC LIMIT 1"
         )
         plan = cursor.fetchone()
 
