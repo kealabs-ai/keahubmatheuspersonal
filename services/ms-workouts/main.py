@@ -158,12 +158,16 @@ def update_template(template_id: int, body: UpdateTemplate, authorization: str =
     require_admin(authorization)
     conn = get_db()
     cursor = conn.cursor()
-    fields = {k: v for k, v in body.model_dump().items() if v is not None}
-    if not fields:
+    # Inclui campos com valor None explicitamente definido (exceto campos não enviados)
+    # months pode ser 0 ou None (remover limite), por isso usa model_dump com exclude_unset=False
+    fields = {k: v for k, v in body.model_dump().items() if v is not None or k == 'months'}
+    # Remove campos que não foram enviados na requisição
+    sent   = {k: v for k, v in fields.items() if k in body.model_fields_set}
+    if not sent:
         cursor.close(); conn.close()
         return {"message": "Nenhum campo para atualizar"}
-    set_clause = ", ".join(f"{k}=%s" for k in fields)
-    cursor.execute(f"UPDATE workout_templates SET {set_clause} WHERE id=%s", (*fields.values(), template_id))
+    set_clause = ", ".join(f"{k}=%s" for k in sent)
+    cursor.execute(f"UPDATE workout_templates SET {set_clause} WHERE id=%s", (*sent.values(), template_id))
     conn.commit()
     cursor.close(); conn.close()
     return {"message": "Template atualizado com sucesso."}
@@ -382,18 +386,21 @@ def get_active_plan(authorization: str = Header(...)):
     user_gender = user_row["gender"] if user_row else None
 
     # Calcula meses desde o cadastro do aluno
+    # Aluno com < 30 dias = 0 meses, com 30-59 dias = 1 mês, etc.
     months_since_register = 0
     if user_row and user_row["created_at"]:
-        created = user_row["created_at"]
+        created  = user_row["created_at"]
         ref_date = created.date() if hasattr(created, 'date') else created
         months_since_register = (date.today() - ref_date).days // 30
 
-    # Helper: monta filtro de template por goal + gender + months
-    # Regra months: seleciona o template cujo months é o menor valor >= meses_do_aluno
-    # Ex: aluno com 3 meses -> pega template com months=4 (> 2 e <= 4)
+    print(f"[PLAN] user_id={user_id} goal={user_goal} gender={user_gender} months_since={months_since_register}", flush=True)
+
+    # Helper: seleciona o template mais específico para o aluno
+    # Regra: months do template >= meses do aluno (template cobre até X meses)
+    # Ordena pelo menor months primeiro (mais específico), NULL por último
     def pick_template(cursor, goal_filter, gender_filter):
-        params = []
         where  = ["active = 1"]
+        params = []
 
         if goal_filter:
             where.append("goal = %s")
@@ -403,24 +410,25 @@ def get_active_plan(authorization: str = Header(...)):
             where.append("(gender = %s OR gender IS NULL)")
             params.append(gender_filter)
 
-        where_sql = " AND ".join(where)
+        # months >= meses_do_aluno OU months IS NULL (sem limite)
+        where.append("(months IS NULL OR months >= %s)")
+        params.append(months_since_register)
 
-        # Tenta encontrar o template com menor months que ainda cobre o aluno
-        # Regra: months IS NULL (sem limite) OU months >= meses_do_aluno
-        # Ordena por months ASC para pegar o mais específico primeiro
+        where_sql = " AND ".join(where)
         cursor.execute(
             f"""SELECT id as template_id, name as template_name, goal, level, gender, months
                 FROM workout_templates
                 WHERE {where_sql}
-                  AND (months IS NULL OR months >= %s)
                 ORDER BY
                   CASE WHEN months IS NULL THEN 1 ELSE 0 END ASC,
                   months ASC,
                   id ASC
                 LIMIT 1""",
-            (*params, months_since_register)
+            params
         )
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        print(f"[PLAN] pick_template(goal={goal_filter}, gender={gender_filter}) -> {result}", flush=True)
+        return result
 
     # Busca o template via ciclo ativo do aluno
     cursor.execute(
