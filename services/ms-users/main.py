@@ -104,6 +104,22 @@ def get_all_users(authorization: str = Header(...)):
     return {"users": users, "total": len(users)}
 
 
+@app.get("/users/{user_id}/metrics")
+def get_user_metrics_admin(user_id: int, authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT weight, height, body_fat, waist, arm, leg, chest, recorded_at FROM body_metrics WHERE user_id=%s ORDER BY id DESC LIMIT 1",
+        (user_id,)
+    )
+    m = cursor.fetchone()
+    if m and hasattr(m.get('recorded_at'), 'isoformat'):
+        m['recorded_at'] = m['recorded_at'].isoformat()
+    cursor.close(); conn.close()
+    return {"metrics": m}
+
+
 @app.get("/users/me")
 def get_me(authorization: str = Header(...)):
     user_id = get_user_id(authorization)
