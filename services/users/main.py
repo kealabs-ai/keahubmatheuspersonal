@@ -88,7 +88,7 @@ def create_user(user: User):
             """INSERT INTO users (name, email, phone, cpf, birth_date, cep, address, number,
                neighborhood, city, state, country_code, username, password,
                plan, plan_start, plan_renewal, goal, role, active)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,1)""",
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0)""",
             (user.name, user.email, user.phone, user.cpf, user.birth_date, user.cep,
              user.address, user.number, user.neighborhood, user.city, user.state,
              user.country_code, user.username, hashed,

@@ -242,6 +242,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
 
         if status == "approved":
             cursor.execute("UPDATE orders SET payment_status='approved' WHERE id_order=%s", (payment.id_order,))
+            cursor.execute("UPDATE users SET active=1 WHERE id_user=%s", (payment.id_user,))
 
         conn.commit()
 
@@ -310,7 +311,6 @@ async def asaas_webhook(request: Request):
         if new_status == "approved":
             cursor.execute("UPDATE payments SET payment_status='approved', paid_at=NOW() WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='approved' WHERE id_order=%s", (order_id,))
-            # Buscar dados do pedido para acionar onboarding
             cursor.execute(
                 """SELECT o.id_user, oi.plan_name, oi.plan_frequency
                    FROM orders o JOIN order_items oi ON oi.id_order = o.id_order
@@ -318,6 +318,8 @@ async def asaas_webhook(request: Request):
                 (order_id,)
             )
             order_row = cursor.fetchone()
+            if order_row:
+                cursor.execute("UPDATE users SET active=1 WHERE id_user=%s", (order_row["id_user"],))
         elif new_status == "rejected":
             cursor.execute("UPDATE payments SET payment_status='rejected' WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='rejected' WHERE id_order=%s", (order_id,))
