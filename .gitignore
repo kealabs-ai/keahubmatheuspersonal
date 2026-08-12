@@ -17,4 +17,3 @@ venv/
 ENV/
 .DS_Store
 *.log
-.env.example
