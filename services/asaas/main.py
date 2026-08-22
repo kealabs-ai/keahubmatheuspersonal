@@ -102,20 +102,22 @@ class AsaasPayment(BaseModel):
     address_number: Optional[str] = None
     address_complement: Optional[str] = None
 
-class CheckoutItem(BaseModel):
-    name: str
-    description: Optional[str] = None
-    quantity: int = 1
-    value: Decimal
-
 class AsaasCartCheckout(BaseModel):
-    id_order: int
+    id_order: str
     id_user: int
-    items: list[CheckoutItem]
-    minutes_to_expire: int = 60
-    success_url: Optional[str] = None
-    cancel_url: Optional[str] = None
-    expired_url: Optional[str] = None
+    billing_type: str = "PIX"
+    amount: Decimal
+    description: Optional[str] = None
+    due_date: Optional[str] = None
+    installments: int = 1
+    remote_ip: Optional[str] = None
+    customer_name: str
+    customer_email: str
+    customer_cpf_cnpj: str
+    customer_phone: Optional[str] = None
+    postal_code: Optional[str] = None
+    address_number: Optional[str] = None
+    address_complement: Optional[str] = None
 
 class AsaasCustomer(BaseModel):
     name: str
@@ -146,58 +148,83 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
         return res.json()["id"]
 
 @app.post("/asaas/checkout/cart", status_code=200)
-def create_cart_checkout(data: AsaasCartCheckout):
-    headers = get_headers()
-    payload = {
-        "billingTypes": ["PIX"],
-        "chargeTypes": ["DETACHED"],
-        "minutesToExpire": data.minutes_to_expire,
-        "items": [
-            {
-                "name": item.name,
-                "description": item.description or item.name,
-                "quantity": item.quantity,
-                "value": float(item.value),
-            }
-            for item in data.items
-        ],
-    }
-    if data.success_url or data.cancel_url or data.expired_url:
-        payload["callback"] = {
-            "successUrl": data.success_url or "",
-            "cancelUrl": data.cancel_url or "",
-            "expiredUrl": data.expired_url or "",
+def create_cart_checkout(data: AsaasCartCheckout, request: Request):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        headers = get_headers()
+
+        customer_id = get_or_create_customer(AsaasCustomer(
+            name=data.customer_name,
+            email=data.customer_email,
+            cpf_cnpj=data.customer_cpf_cnpj,
+            phone=data.customer_phone,
+        ))
+        if not customer_id:
+            raise HTTPException(400, "Falha ao criar/buscar customer no Asaas")
+
+        due_date = data.due_date or datetime.date.today().isoformat()
+        remote_ip = data.remote_ip or request.client.host
+
+        payload = {
+            "customer": customer_id,
+            "billingType": "PIX",
+            "value": float(data.amount),
+            "dueDate": due_date,
+            "description": data.description or f"Pedido #{data.id_order}",
+            "externalReference": data.id_order,
+            "remoteIp": remote_ip,
         }
 
-    print(f"[ASAAS] POST /checkouts body={payload}", flush=True)
-    with httpx.Client() as client:
-        res = client.post(f"{ASAAS_BASE_URL}/checkouts", headers=headers, json=payload)
-        print(f"[ASAAS] POST /checkouts status={res.status_code} body={res.text}", flush=True)
-        if res.status_code not in (200, 201):
-            raise HTTPException(400, f"Asaas checkout error {res.status_code}: {res.text}")
-        asaas_data = res.json()
+        print(f"[ASAAS] POST /payments body={payload}", flush=True)
+        with httpx.Client() as client:
+            res = client.post(f"{ASAAS_BASE_URL}/payments", headers=headers, json=payload)
+            print(f"[ASAAS] POST /payments status={res.status_code} body={res.text}", flush=True)
+            if res.status_code not in (200, 201):
+                raise HTTPException(400, f"Asaas payments error {res.status_code}: {res.text}")
+            asaas_data = res.json()
 
-    conn = get_db()
-    cursor = conn.cursor()
-    try:
-        total = sum(float(i.value) * i.quantity for i in data.items)
+        asaas_id = asaas_data["id"]
+        status = STATUS_MAP.get(asaas_data.get("status", "PENDING"), "pending")
+        pix_code = None
+        pix_qr_code = None
+
+        with httpx.Client() as client:
+            for _ in range(5):
+                pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
+                print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
+                if pix_res.status_code == 200:
+                    pix_data = pix_res.json()
+                    pix_code = pix_data.get("payload")
+                    pix_qr_code = pix_data.get("encodedImage")
+                    if pix_code or pix_qr_code:
+                        break
+                time.sleep(1)
+
         cursor.execute(
             """INSERT INTO payments (id_order, payment_method, amount, installments, payment_status, transaction_id)
                VALUES (%s, 'pix', %s, 1, 'pending', %s)""",
-            (data.id_order, total, asaas_data.get("id"))
+            (data.id_order, data.amount, asaas_id)
         )
         conn.commit()
         payment_id = cursor.lastrowid
+
+        return {
+            "payment_id": payment_id,
+            "asaas_id": asaas_id,
+            "status": status,
+            "pix_code": pix_code,
+            "pix_qr_code": pix_qr_code,
+        }
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(400, str(e))
     finally:
         cursor.close()
         conn.close()
-
-    return {
-        "payment_id": payment_id,
-        "asaas_id": asaas_data.get("id"),
-        "checkout_url": asaas_data.get("url"),
-        "status": "pending",
-    }
 
 @app.post("/asaas/checkout", status_code=200)
 def create_checkout(payment: AsaasPayment, request: Request):
@@ -296,6 +323,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
         boleto_url = asaas_data.get("bankSlipUrl")
         invoice_url = asaas_data.get("invoiceUrl")
         pix_code = None
+        pix_qr_code = None
 
         if payment.billing_type == "PIX":
             with httpx.Client() as client:
@@ -304,8 +332,9 @@ def create_checkout(payment: AsaasPayment, request: Request):
                     print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
                     if pix_res.status_code == 200:
                         pix_data = pix_res.json()
-                        pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
-                        if pix_code:
+                        pix_code = pix_data.get("payload")
+                        pix_qr_code = pix_data.get("encodedImage")
+                        if pix_code or pix_qr_code:
                             break
                     time.sleep(1)
 
@@ -328,6 +357,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
             "status": status,
             "billing_type": payment.billing_type,
             "pix_code": pix_code,
+            "pix_qr_code": pix_qr_code,
             "boleto_url": boleto_url,
             "invoice_url": invoice_url,
         }
@@ -349,6 +379,7 @@ def get_payment_status(asaas_id: str):
         res.raise_for_status()
         data = res.json()
     pix_code = None
+    pix_qr_code = None
     if data.get("billingType") == "PIX":
         with httpx.Client() as client:
             for _ in range(5):
@@ -356,8 +387,9 @@ def get_payment_status(asaas_id: str):
                 print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
                 if pix_res.status_code == 200:
                     pix_data = pix_res.json()
-                    pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
-                    if pix_code:
+                    pix_code = pix_data.get("payload")
+                    pix_qr_code = pix_data.get("encodedImage")
+                    if pix_code or pix_qr_code:
                         break
                 time.sleep(1)
     return {
@@ -367,6 +399,7 @@ def get_payment_status(asaas_id: str):
         "value": data.get("value"),
         "billing_type": data.get("billingType"),
         "pix_code": pix_code,
+        "pix_qr_code": pix_qr_code,
         "boleto_url": data.get("bankSlipUrl"),
         "invoice_url": data.get("invoiceUrl"),
     }
