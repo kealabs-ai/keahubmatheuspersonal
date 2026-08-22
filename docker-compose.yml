@@ -2,11 +2,12 @@ services:
   users-service:
     image: matheuspersonal/users:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -32,11 +33,12 @@ services:
   subscriptions-service:
     image: matheuspersonal/subscriptions:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -56,11 +58,12 @@ services:
   orders-service:
     image: matheuspersonal/orders:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -80,11 +83,12 @@ services:
   payments-service:
     image: matheuspersonal/payments:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -104,11 +108,12 @@ services:
   coupons-service:
     image: matheuspersonal/coupons:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -128,11 +133,12 @@ services:
   leads-service:
     image: matheuspersonal/leads:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -152,11 +158,12 @@ services:
   feedbacks-service:
     image: matheuspersonal/feedbacks:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -176,11 +183,12 @@ services:
   asaas-service:
     image: matheuspersonal/asaas:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
       ASAAS_API_KEY: ${ASAAS_API_KEY}
       ASAAS_BASE_URL: ${ASAAS_BASE_URL}
@@ -203,11 +211,12 @@ services:
   ms-auth-service:
     image: matheuspersonal/ms-auth:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
@@ -233,11 +242,12 @@ services:
   ms-users-service:
     image: matheuspersonal/ms-users:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
       UPLOAD_DIR: /app/uploads/avatars
       BASE_URL: ${BASE_URL}
@@ -272,11 +282,12 @@ services:
   ms-workouts-service:
     image: matheuspersonal/ms-workouts:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
       DB_POOL_NAME: pool_workouts
     labels:
@@ -297,11 +308,12 @@ services:
   ms-progress-service:
     image: matheuspersonal/ms-progress:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
       UPLOAD_DIR: /app/uploads/photos
       BASE_URL: ${BASE_URL}
@@ -337,11 +349,12 @@ services:
   ms-nutrition-service:
     image: matheuspersonal/ms-nutrition:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -361,11 +374,12 @@ services:
   ms-notifications-service:
     image: matheuspersonal/ms-notifications:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -385,11 +399,12 @@ services:
   ms-dashboard-service:
     image: matheuspersonal/ms-dashboard:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -409,11 +424,12 @@ services:
   ms-videos-service:
     image: matheuspersonal/ms-videos:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -433,11 +449,12 @@ services:
   ms-onboarding-service:
     image: matheuspersonal/ms-onboarding:latest
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
