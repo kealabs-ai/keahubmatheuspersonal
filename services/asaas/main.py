@@ -22,7 +22,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     from fastapi.responses import JSONResponse
     return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {str(exc)}"})
 
-ASAAS_BASE_URL = os.getenv("ASAAS_BASE_URL", "https://sandbox.asaas.com/api/v3")
+ASAAS_BASE_URL = os.getenv("ASAAS_BASE_URL", "https://api.asaas.com/api/v3")
 
 STATUS_MAP = {
     "CONFIRMED": "approved",
