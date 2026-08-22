@@ -6,6 +6,7 @@ from typing import Optional
 import os
 import httpx
 import datetime
+import time
 import sys
 
 ONBOARDING_URL = os.getenv("ONBOARDING_URL", "http://ms-onboarding-service:8000/onboarding/activate")
@@ -228,10 +229,15 @@ def create_checkout(payment: AsaasPayment, request: Request):
 
         if payment.billing_type == "PIX":
             with httpx.Client() as client:
-                pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
-                if pix_res.status_code == 200:
-                    pix_data = pix_res.json()
-                    pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
+                for _ in range(5):
+                    pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
+                    print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
+                    if pix_res.status_code == 200:
+                        pix_data = pix_res.json()
+                        pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
+                        if pix_code:
+                            break
+                    time.sleep(1)
 
         cursor.execute("""INSERT INTO payments (id_order, payment_method, amount, installments,
                          payment_status, transaction_id)
@@ -275,10 +281,15 @@ def get_payment_status(asaas_id: str):
     pix_code = None
     if data.get("billingType") == "PIX":
         with httpx.Client() as client:
-            pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
-            if pix_res.status_code == 200:
-                pix_data = pix_res.json()
-                pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
+            for _ in range(5):
+                pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
+                print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
+                if pix_res.status_code == 200:
+                    pix_data = pix_res.json()
+                    pix_code = pix_data.get("payload") or pix_data.get("encodedImage")
+                    if pix_code:
+                        break
+                time.sleep(1)
     return {
         "asaas_id": asaas_id,
         "status": STATUS_MAP.get(data.get("status", "PENDING"), "pending"),
