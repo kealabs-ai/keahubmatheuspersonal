@@ -102,6 +102,21 @@ class AsaasPayment(BaseModel):
     address_number: Optional[str] = None
     address_complement: Optional[str] = None
 
+class CheckoutItem(BaseModel):
+    name: str
+    description: Optional[str] = None
+    quantity: int = 1
+    value: Decimal
+
+class AsaasCartCheckout(BaseModel):
+    id_order: int
+    id_user: int
+    items: list[CheckoutItem]
+    minutes_to_expire: int = 60
+    success_url: Optional[str] = None
+    cancel_url: Optional[str] = None
+    expired_url: Optional[str] = None
+
 class AsaasCustomer(BaseModel):
     name: str
     email: str
@@ -114,11 +129,12 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
         print(f"[ASAAS] GET /customers headers={headers} params={{cpfCnpj: {customer.cpf_cnpj}}}", flush=True)
         res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
         print(f"[ASAAS] GET /customers status={res.status_code} body={res.text}", flush=True)
-        if res.status_code != 200:
+        if res.status_code == 200:
+            data = res.json()
+            if data.get("data"):
+                return data["data"][0]["id"]
+        elif res.status_code != 404:
             raise HTTPException(400, f"Asaas customers GET error {res.status_code}: {res.text}")
-        data = res.json()
-        if data.get("data"):
-            return data["data"][0]["id"]
         payload = {"name": customer.name, "email": customer.email, "cpfCnpj": customer.cpf_cnpj}
         if customer.phone:
             payload["mobilePhone"] = customer.phone
@@ -128,6 +144,60 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
         if res.status_code not in (200, 201):
             raise HTTPException(400, f"Asaas customers POST error {res.status_code}: {res.text}")
         return res.json()["id"]
+
+@app.post("/asaas/checkout/cart", status_code=200)
+def create_cart_checkout(data: AsaasCartCheckout):
+    headers = get_headers()
+    payload = {
+        "billingTypes": ["PIX"],
+        "chargeTypes": ["DETACHED"],
+        "minutesToExpire": data.minutes_to_expire,
+        "items": [
+            {
+                "name": item.name,
+                "description": item.description or item.name,
+                "quantity": item.quantity,
+                "value": float(item.value),
+            }
+            for item in data.items
+        ],
+    }
+    if data.success_url or data.cancel_url or data.expired_url:
+        payload["callback"] = {
+            "successUrl": data.success_url or "",
+            "cancelUrl": data.cancel_url or "",
+            "expiredUrl": data.expired_url or "",
+        }
+
+    print(f"[ASAAS] POST /checkouts body={payload}", flush=True)
+    with httpx.Client() as client:
+        res = client.post(f"{ASAAS_BASE_URL}/checkouts", headers=headers, json=payload)
+        print(f"[ASAAS] POST /checkouts status={res.status_code} body={res.text}", flush=True)
+        if res.status_code not in (200, 201):
+            raise HTTPException(400, f"Asaas checkout error {res.status_code}: {res.text}")
+        asaas_data = res.json()
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        total = sum(float(i.value) * i.quantity for i in data.items)
+        cursor.execute(
+            """INSERT INTO payments (id_order, payment_method, amount, installments, payment_status, transaction_id)
+               VALUES (%s, 'pix', %s, 1, 'pending', %s)""",
+            (data.id_order, total, asaas_data.get("id"))
+        )
+        conn.commit()
+        payment_id = cursor.lastrowid
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {
+        "payment_id": payment_id,
+        "asaas_id": asaas_data.get("id"),
+        "checkout_url": asaas_data.get("url"),
+        "status": "pending",
+    }
 
 @app.post("/asaas/checkout", status_code=200)
 def create_checkout(payment: AsaasPayment, request: Request):
