@@ -2,12 +2,13 @@ services:
   users-service:
     image: matheuspersonal/users:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-users.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/users`)"
@@ -32,12 +33,13 @@ services:
   subscriptions-service:
     image: matheuspersonal/subscriptions:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-subscriptions.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/subscriptions`)"
@@ -56,12 +58,13 @@ services:
   orders-service:
     image: matheuspersonal/orders:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-orders.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && (PathPrefix(`/api/orders`) || PathPrefix(`/api/aluno/orders`))"
@@ -80,12 +83,13 @@ services:
   payments-service:
     image: matheuspersonal/payments:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-payments.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/payments`)"
@@ -104,12 +108,13 @@ services:
   coupons-service:
     image: matheuspersonal/coupons:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-coupons.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/coupons`)"
@@ -128,12 +133,13 @@ services:
   leads-service:
     image: matheuspersonal/leads:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-leads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/leads`)"
@@ -152,12 +158,13 @@ services:
   feedbacks-service:
     image: matheuspersonal/feedbacks:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-feedbacks.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/feedbacks`)"
@@ -176,14 +183,15 @@ services:
   asaas-service:
     image: matheuspersonal/asaas:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
-      ASAAS_API_KEY: "$$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmQ0YWUyZTU4LTdlNTMtNGU1Yy1iODcyLWE4ZmYyZGUyMjZhODo6JGFhY2hfNjBlMTI0ZmEtOTlhYi00NjlhLTllYjQtNmRjNjZiMjlkNzFi"
-      ASAAS_BASE_URL: "https://sandbox.asaas.com/api/v3"
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
+      ASAAS_API_KEY: ${ASAAS_API_KEY}
+      ASAAS_BASE_URL: ${ASAAS_BASE_URL}
       ONBOARDING_URL: "http://ms-onboarding-service:8000/onboarding/activate"
     labels:
       - "traefik.enable=true"
@@ -203,18 +211,19 @@ services:
   ms-auth-service:
     image: matheuspersonal/ms-auth:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
-      SMTP_HOST: smtp.hostinger.com
-      SMTP_PORT: "465"
-      SMTP_SSL: "true"
-      SMTP_USER: admin@matheuspersonal.com.br
-      SMTP_PASS: Sally2025@!
-      FRONTEND_URL: https://matheuspersonal.com.br
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SSL: ${SMTP_SSL}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      FRONTEND_URL: ${FRONTEND_URL}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-auth.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/auth`)"
@@ -233,14 +242,15 @@ services:
   ms-users-service:
     image: matheuspersonal/ms-users:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
       UPLOAD_DIR: /app/uploads/avatars
-      BASE_URL: https://srv1023256.hstgr.cloud
+      BASE_URL: ${BASE_URL}
     volumes:
       - users_uploads:/app/uploads
     labels:
@@ -257,7 +267,6 @@ services:
       - "traefik.http.middlewares.mp-cors-aluno.headers.accesscontrolallowcredentials=true"
       - "traefik.http.routers.mp-ms-users.middlewares=mp-strip-aluno,mp-cors-aluno"
       - "traefik.http.services.mp-ms-users.loadbalancer.server.port=8000"
-      # Rota para servir avatars
       - "traefik.http.routers.mp-ms-users-uploads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/uploads/avatars`)"
       - "traefik.http.routers.mp-ms-users-uploads.entrypoints=https"
       - "traefik.http.routers.mp-ms-users-uploads.tls=true"
@@ -273,12 +282,13 @@ services:
   ms-workouts-service:
     image: matheuspersonal/ms-workouts:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
       DB_POOL_NAME: pool_workouts
     labels:
       - "traefik.enable=true"
@@ -298,39 +308,36 @@ services:
   ms-progress-service:
     image: matheuspersonal/ms-progress:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
       UPLOAD_DIR: /app/uploads/photos
-      BASE_URL: https://srv1023256.hstgr.cloud
+      BASE_URL: ${BASE_URL}
     volumes:
       - progress_uploads:/app/uploads
     labels:
       - "traefik.enable=true"
-      # Rota principal: /api/aluno/progress
       - "traefik.http.routers.mp-ms-progress.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/progress`)"
       - "traefik.http.routers.mp-ms-progress.entrypoints=https"
       - "traefik.http.routers.mp-ms-progress.tls=true"
       - "traefik.http.routers.mp-ms-progress.middlewares=mp-strip-progress,mp-cors-progress"
       - "traefik.http.routers.mp-ms-progress.service=mp-ms-progress"
       - "traefik.http.middlewares.mp-strip-progress.stripprefix.prefixes=/api/aluno"
-      # Rota uploads: /uploads (sem strip)
       - "traefik.http.routers.mp-ms-progress-uploads.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/uploads`)"
       - "traefik.http.routers.mp-ms-progress-uploads.entrypoints=https"
       - "traefik.http.routers.mp-ms-progress-uploads.tls=true"
       - "traefik.http.routers.mp-ms-progress-uploads.middlewares=mp-cors-progress"
       - "traefik.http.routers.mp-ms-progress-uploads.service=mp-ms-progress"
-      # CORS dedicado para progress (evita dependência do middleware do users-service)
       - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolalloworiginlist=https://www.matheuspersonal.com.br,https://matheuspersonal.com.br,https://srv1023256.hstgr.cloud,http://localhost:5173"
       - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
       - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolallowheaders=Content-Type,Authorization,Accept,X-Requested-With"
       - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolmaxage=86400"
       - "traefik.http.middlewares.mp-cors-progress.headers.addvaryheader=true"
       - "traefik.http.middlewares.mp-cors-progress.headers.accesscontrolallowcredentials=true"
-      # Serviço
       - "traefik.http.services.mp-ms-progress.loadbalancer.server.port=8000"
     deploy:
       replicas: 1
@@ -342,12 +349,13 @@ services:
   ms-nutrition-service:
     image: matheuspersonal/ms-nutrition:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-nutrition.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/nutrition`)"
@@ -366,12 +374,13 @@ services:
   ms-notifications-service:
     image: matheuspersonal/ms-notifications:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-notifications.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/notifications`)"
@@ -390,12 +399,13 @@ services:
   ms-dashboard-service:
     image: matheuspersonal/ms-dashboard:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-dashboard.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/aluno/dashboard`)"
@@ -414,12 +424,13 @@ services:
   ms-videos-service:
     image: matheuspersonal/ms-videos:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-videos.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && PathPrefix(`/api/admin/videos`)"
@@ -438,12 +449,13 @@ services:
   ms-onboarding-service:
     image: matheuspersonal/ms-onboarding:latest
     environment:
-      DB_HOST: srv1078.hstgr.io
-      DB_PORT: "3306"
-      DB_NAME: u549746795_mp
-      DB_USER: u549746795_matheusmp
-      DB_PASSWORD: MP@2026!Passos
-      JWT_SECRET: your-secret-key-change-in-production
+      DB_HOST: ${DB_HOST_MP}
+      DB_PORT: ${DB_PORT_MP}
+      DB_NAME: ${DB_NAME_MP}
+      DB_USER: ${DB_USER_MP}
+      DB_PASSWORD: ${DB_PASSWORD_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mp-ms-onboarding.rule=(Host(`srv1023256.hstgr.cloud`) || Host(`matheuspersonal.com.br`) || Host(`www.matheuspersonal.com.br`)) && (PathPrefix(`/api/onboarding`) || PathPrefix(`/api/admin/onboarding`))"
