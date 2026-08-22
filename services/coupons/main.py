@@ -106,18 +106,6 @@ class ValidateCouponBody(BaseModel):
     code: str
 
 
-@app.get("/coupons/validate")
-def validate_coupon_by_query(code: str = None):
-    if not code:
-        raise HTTPException(422, "Parâmetro 'code' é obrigatório")
-    return validate_coupon(code.upper())
-
-
-@app.post("/coupons/validate")
-def validate_coupon_by_body(body: ValidateCouponBody):
-    return validate_coupon(body.code.upper())
-
-
 @app.get("/coupons/{code}")
 def validate_coupon(code: str):
     conn = get_db()
