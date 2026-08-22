@@ -7,7 +7,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -38,7 +38,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -63,7 +63,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -88,7 +88,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -113,7 +113,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -138,7 +138,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -163,7 +163,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -188,7 +188,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
       ASAAS_API_KEY: ${ASAAS_API_KEY}
       ASAAS_BASE_URL: ${ASAAS_BASE_URL}
@@ -216,7 +216,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
@@ -247,7 +247,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
       UPLOAD_DIR: /app/uploads/avatars
       BASE_URL: ${BASE_URL}
@@ -287,7 +287,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
       DB_POOL_NAME: pool_workouts
     labels:
@@ -313,7 +313,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
       UPLOAD_DIR: /app/uploads/photos
       BASE_URL: ${BASE_URL}
@@ -354,7 +354,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -379,7 +379,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -404,7 +404,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -429,7 +429,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
@@ -454,7 +454,7 @@ services:
       DB_NAME: ${DB_NAME_MP}
       DB_USER: ${DB_USER_MP}
       DB_PASSWORD: ${DB_PASSWORD_MP}
-      DB_POOL_SIZE: ${DB_POOL_SIZE_MP}
+      DB_POOL_SIZE: ${DB_POOL_SIZE_MP:-5}
       JWT_SECRET: ${JWT_SECRET}
     labels:
       - "traefik.enable=true"
