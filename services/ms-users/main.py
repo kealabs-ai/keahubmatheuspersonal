@@ -91,6 +91,66 @@ class AdminUpdateUser(BaseModel):
     role: Optional[str] = None
 
 
+@app.get("/users/admin/dashboard")
+def get_admin_dashboard(authorization: str = Header(...)):
+    require_admin(authorization)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""SELECT COUNT(*) AS total_students,
+                          SUM(CASE WHEN active=1 THEN 1 ELSE 0 END) AS active_students,
+                          SUM(CASE WHEN active=0 OR active IS NULL THEN 1 ELSE 0 END) AS inactive_students
+                          FROM users WHERE role='student'""")
+        stats = cursor.fetchone()
+
+        cursor.execute("""SELECT LOWER(wt.level) AS level, COUNT(DISTINCT wc.user_id) AS total
+                          FROM workout_cycles wc
+                          JOIN workout_plans wp ON wp.cycle_id=wc.id
+                          JOIN workout_templates wt ON wt.id=wp.template_id
+                          JOIN users u ON u.id_user=wc.user_id AND u.role='student'
+                          WHERE wc.active=1 AND u.active=1
+                          GROUP BY LOWER(wt.level)""")
+        level_rows = cursor.fetchall()
+        levels = {"beginner": 0, "intermediate": 0, "advanced": 0}
+        for row in level_rows:
+            value = row["level"] or ""
+            if value.startswith("iniciante"):
+                levels["beginner"] += row["total"]
+            elif value.startswith("intermedi"):
+                levels["intermediate"] += row["total"]
+            elif value.startswith("avan"):
+                levels["advanced"] += row["total"]
+
+        cursor.execute("""SELECT u.id_user AS id, u.name, u.email, COUNT(wl.id) AS completed_workouts
+                          FROM users u
+                          JOIN workout_logs wl ON wl.user_id=u.id_user AND wl.completed=1
+                            AND wl.finished_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                          WHERE u.role='student' AND u.active=1
+                          GROUP BY u.id_user, u.name, u.email
+                          ORDER BY completed_workouts DESC, u.name ASC LIMIT 10""")
+        top_students = cursor.fetchall()
+
+        cursor.execute("""SELECT id_user AS id, name, email, plan, plan_renewal,
+                            DATEDIFF(plan_renewal, CURDATE()) AS days_remaining
+                          FROM users
+                          WHERE role='student' AND active=1
+                            AND plan_renewal BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+                          ORDER BY plan_renewal ASC""")
+        upcoming_renewals = cursor.fetchall()
+
+        cursor.execute("""SELECT DATE_FORMAT(finished_at, '%m/%y') AS month,
+                            COUNT(*) AS completed_workouts
+                          FROM workout_logs
+                          WHERE completed=1 AND finished_at >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 5 MONTH)
+                            AND finished_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                          GROUP BY YEAR(finished_at), MONTH(finished_at)
+                          ORDER BY YEAR(finished_at), MONTH(finished_at)""")
+        performance = cursor.fetchall()
+        return {"stats": stats, "levels": levels, "top_students": top_students,
+                "upcoming_renewals": upcoming_renewals, "performance": performance}
+    finally:
+        cursor.close()
+        conn.close()
 @app.get("/users/all")
 def get_all_users(authorization: str = Header(...)):
     require_admin(authorization)
