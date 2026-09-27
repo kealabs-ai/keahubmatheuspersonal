@@ -191,6 +191,7 @@ def create_cart_checkout(data: AsaasCartCheckout, request: Request):
 
         with httpx.Client() as client:
             for _ in range(5):
+                console.log(f"[ASAAS] GET pixQrCode for payment {asaas_id}", flush=True)
                 pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
                 print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
                 if pix_res.status_code == 200:

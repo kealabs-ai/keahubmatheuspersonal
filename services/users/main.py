@@ -117,6 +117,17 @@ def create_user(user: User):
         cursor.close()
         conn.close()
 
+@app.get("/users/check-email")
+def check_user_email(email: str):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT active FROM users WHERE LOWER(email)=LOWER(%s) LIMIT 1", (email.strip(),))
+        user = cursor.fetchone()
+        return {"exists": bool(user), "is_active": bool(user["active"]) if user else False}
+    finally:
+        cursor.close()
+        conn.close()
 @app.get("/users/{user_id}")
 def get_user(user_id: int):
     conn = get_db()
@@ -133,6 +144,27 @@ def get_user(user_id: int):
     conn.close()
     return user
 
+@app.post("/users/{user_id}/activate")
+def activate_user(user_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE users SET active=1 WHERE id_user=%s", (user_id,))
+        if cursor.rowcount == 0:
+            cursor.execute("SELECT id_user FROM users WHERE id_user=%s", (user_id,))
+            if not cursor.fetchone():
+                raise HTTPException(404, "User not found")
+        conn.commit()
+        return {"success": True, "id": user_id, "is_active": True}
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(500, str(e))
+    finally:
+        cursor.close()
+        conn.close()
 @app.post("/users/{user_id}/update")
 def update_user(user_id: int, user: User):
     conn = get_db()
