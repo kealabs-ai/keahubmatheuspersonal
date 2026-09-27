@@ -154,7 +154,7 @@ def activate(req: OnboardingRequest):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT id_user, name, plan, active FROM users WHERE id_user=%s", (req.id_user,))
+        cursor.execute("SELECT id_user, name, plan, plan_renewal, active FROM users WHERE id_user=%s", (req.id_user,))
         user = cursor.fetchone()
         if not user:
             raise HTTPException(404, "Usuário não encontrado")
@@ -163,15 +163,26 @@ def activate(req: OnboardingRequest):
         is_new_student = not user["active"]
         today = date.today()
         months = PLAN_DURATION_MONTHS.get(req.plan_frequency.lower(), 1)
-        renewal = today + relativedelta(months=months)
         plan_enum = PLAN_NAME_MAP.get(req.plan_name.lower().strip(), req.plan_name.upper())
 
-        print(f"[ONBOARDING] user_id={req.id_user} plan='{plan_enum}'", flush=True)
+        # Regra de datas:
+        # - Novo aluno ou plano vencido → plan_start = hoje, plan_renewal = hoje + meses
+        # - Renovação com plano ainda ativo → plan_start = hoje, plan_renewal = vencimento_atual + meses
+        current_renewal = user.get("plan_renewal")
+        if current_renewal and current_renewal >= today:
+            # Renovação antecipada: soma ao vencimento atual
+            renewal = current_renewal + relativedelta(months=months)
+        else:
+            # Novo plano ou reativação após vencimento
+            renewal = today + relativedelta(months=months)
+        plan_start = today
+
+        print(f"[ONBOARDING] user_id={req.id_user} plan='{plan_enum}' plan_start={plan_start} plan_renewal={renewal}", flush=True)
 
         # 1. Ativar usuário
         cursor.execute(
-            "UPDATE users SET plan=%s, plan_start=COALESCE(plan_start, %s), plan_renewal=%s, active=1 WHERE id_user=%s",
-            (plan_enum, today, renewal, req.id_user)
+            "UPDATE users SET plan=%s, plan_start=%s, plan_renewal=%s, active=1 WHERE id_user=%s",
+            (plan_enum, plan_start, renewal, req.id_user)
         )
 
         # 2. Assinatura
@@ -221,7 +232,7 @@ def activate(req: OnboardingRequest):
             )
 
         conn.commit()
-        return {"success": True, "user_id": req.id_user, "plan": plan_enum, "plan_renewal": renewal.isoformat(), "is_new_student": is_new_student}
+        return {"success": True, "user_id": req.id_user, "plan": plan_enum, "plan_start": plan_start.isoformat(), "plan_renewal": renewal.isoformat(), "is_new_student": is_new_student}
     except HTTPException:
         conn.rollback(); raise
     except Exception as e:

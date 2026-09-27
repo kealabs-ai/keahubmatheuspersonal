@@ -49,6 +49,7 @@ def require_admin(authorization: str) -> int:
 
 VALID_GENDERS = ("masculino", "feminino")
 VALID_GOALS   = ("Hipertrofia", "Emagrecimento", "Condicionamento", "Saúde Geral", "Performance")
+VALID_LEVELS  = ("beginner", "intermediate", "advanced")
 
 class UpdateProfile(BaseModel):
     name: Optional[str] = None
@@ -56,6 +57,7 @@ class UpdateProfile(BaseModel):
     birthdate: Optional[date] = None
     goal: Optional[str] = None
     gender: Optional[str] = None
+    level: Optional[str] = None
     recurring_billing: Optional[bool] = None
 
 class ChangePassword(BaseModel):
@@ -157,7 +159,7 @@ def get_all_users(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, phone, plan, plan_start, plan_renewal, active, role FROM users ORDER BY name"
+        "SELECT id_user as id, name, email, phone, plan, plan_start, plan_renewal, active, role, level FROM users ORDER BY name"
     )
     users = cursor.fetchall()
     cursor.close(); conn.close()
@@ -186,7 +188,7 @@ def get_me(authorization: str = Header(...)):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT id_user as id, name, email, phone, birth_date, goal, gender, plan, plan_start, plan_renewal, avatar_url, COALESCE(recurring_billing, 0) as recurring_billing FROM users WHERE id_user=%s",
+        "SELECT id_user as id, name, email, phone, birth_date, goal, gender, level, plan, plan_start, plan_renewal, avatar_url, COALESCE(recurring_billing, 0) as recurring_billing FROM users WHERE id_user=%s",
         (user_id,)
     )
     user = cursor.fetchone()
@@ -213,6 +215,8 @@ def update_me(body: UpdateProfile, authorization: str = Header(...)):
         raise HTTPException(400, f"gender inválido. Use: {VALID_GENDERS}")
     if body.goal is not None and body.goal not in VALID_GOALS:
         raise HTTPException(400, f"goal inválido. Use: {VALID_GOALS}")
+    if body.level is not None and body.level not in VALID_LEVELS:
+        raise HTTPException(400, f"level inválido. Use: {VALID_LEVELS}")
 
     conn = get_db()
     cursor = conn.cursor()
