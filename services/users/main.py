@@ -67,7 +67,7 @@ class User(BaseModel):
     password: str
     country_code: str = '+55'
     plan: Optional[str] = None
-    plan_frequency: Optional[str] = None  # monthly | quarterly | semiannual | annual
+    plan_frequency: Optional[str] = None
     goal: Optional[str] = None
     role: str = 'student'
 
@@ -128,6 +128,42 @@ def check_user_email(email: str):
     finally:
         cursor.close()
         conn.close()
+
+@app.get("/users/by-email")
+def get_user_by_email(email: str):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT id_user, name, email, cpf, phone, active FROM users WHERE LOWER(email)=LOWER(%s) LIMIT 1",
+            (email.strip(),)
+        )
+        user = cursor.fetchone()
+        if not user:
+            raise HTTPException(404, "User not found")
+        return user
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/users/by-cpf")
+def get_user_by_cpf(cpf: str):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        clean = cpf.replace(".", "").replace("-", "").strip()
+        cursor.execute(
+            "SELECT id_user, name, email, cpf, phone, active FROM users WHERE REPLACE(REPLACE(cpf,'.',''),'-','')=%s LIMIT 1",
+            (clean,)
+        )
+        user = cursor.fetchone()
+        if not user:
+            raise HTTPException(404, "User not found")
+        return user
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.get("/users/{user_id}")
 def get_user(user_id: int):
     conn = get_db()
@@ -165,6 +201,7 @@ def activate_user(user_id: int):
     finally:
         cursor.close()
         conn.close()
+
 @app.post("/users/{user_id}/update")
 def update_user(user_id: int, user: User):
     conn = get_db()
