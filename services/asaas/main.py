@@ -22,7 +22,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     from fastapi.responses import JSONResponse
     return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {str(exc)}"})
 
-ASAAS_BASE_URL = os.getenv("ASAAS_BASE_URL", "https://api.asaas.com/api/v3")
+ASAAS_BASE_URL = os.getenv("ASAAS_BASE_URL", "https://api-sandbox.asaas.com/v3")
 
 STATUS_MAP = {
     "CONFIRMED": "approved",
@@ -304,15 +304,17 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 "expiryYear": expiry_year,
                 "ccv": payment.card_cvv,
             }
-            payload["creditCardHolderInfo"] = {
+            holder_info = {
                 "name": payment.customer_name,
                 "email": payment.customer_email,
                 "cpfCnpj": payment.customer_cpf_cnpj,
-                "postalCode": postal_code,
-                "addressNumber": address_number,
-                "addressComplement": address_complement,
+                "postalCode": postal_code or "01310100",
+                "addressNumber": address_number or "S/N",
                 "mobilePhone": mobile_phone,
             }
+            if address_complement:
+                holder_info["addressComplement"] = address_complement
+            payload["creditCardHolderInfo"] = holder_info
 
         print(f"[ASAAS] POST /payments body={payload}", flush=True)
         with httpx.Client() as client:
