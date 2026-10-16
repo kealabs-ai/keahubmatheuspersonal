@@ -42,9 +42,9 @@ STATUS_MAP = {
 }
 
 def get_headers():
-    api_key = os.getenv("ASAAS_API_KEY") or os.getenv("ASSAS_API_KEY")  # fallback typo
+    api_key = os.getenv("ASAAS_API_KEY") or os.getenv("ASSAS_API_KEY")
     if not api_key:
-        raise HTTPException(500, "ASAAS_API_KEY não configurada")
+        raise HTTPException(500, "ASAAS_API_KEY nao configurada")
     return {
         "accept": "application/json",
         "content-type": "application/json",
@@ -87,20 +87,26 @@ class AsaasPayment(BaseModel):
     external_reference: Optional[str] = None
     installments: int = 1
     remote_ip: Optional[str] = None
-    # Dados do cliente (vindos do frontend)
+    # Dados do cliente
     customer_name: str
     customer_email: str
     customer_cpf_cnpj: str
     customer_phone: Optional[str] = None
-    # Dados do cartão (vindos do frontend)
+    # Dados do cartao
     card_number: Optional[str] = None
     card_name: Optional[str] = None
-    card_expiry: Optional[str] = None   # formato MM/YY ou MM/YYYY
+    card_expiry: Optional[str] = None
     card_cvv: Optional[str] = None
-    # Endereço (opcional, buscado do banco se não enviado)
+    # Endereco
     postal_code: Optional[str] = None
     address_number: Optional[str] = None
     address_complement: Optional[str] = None
+    # Campos extras do frontend (aceitos mas nao usados diretamente)
+    original_amount: Optional[Decimal] = None
+    discount_amount: Optional[Decimal] = None
+    coupon_code: Optional[str] = None
+    coupon_id: Optional[int] = None
+    payment_id: Optional[int] = None
 
 class AsaasCartCheckout(BaseModel):
     id_order: str
@@ -128,7 +134,7 @@ class AsaasCustomer(BaseModel):
 def get_or_create_customer(customer: AsaasCustomer) -> str:
     headers = get_headers()
     with httpx.Client() as client:
-        print(f"[ASAAS] GET /customers headers={headers} params={{cpfCnpj: {customer.cpf_cnpj}}}", flush=True)
+        print(f"[ASAAS] GET /customers cpfCnpj={customer.cpf_cnpj}", flush=True)
         res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
         print(f"[ASAAS] GET /customers status={res.status_code} body={res.text}", flush=True)
         if res.status_code == 200:
@@ -140,7 +146,7 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
         payload = {"name": customer.name, "email": customer.email, "cpfCnpj": customer.cpf_cnpj}
         if customer.phone:
             payload["mobilePhone"] = customer.phone
-        print(f"[ASAAS] POST /customers headers={headers} body={payload}", flush=True)
+        print(f"[ASAAS] POST /customers body={payload}", flush=True)
         res = client.post(f"{ASAAS_BASE_URL}/customers", headers=headers, json=payload)
         print(f"[ASAAS] POST /customers status={res.status_code} body={res.text}", flush=True)
         if res.status_code not in (200, 201):
@@ -191,7 +197,7 @@ def create_cart_checkout(data: AsaasCartCheckout, request: Request):
 
         with httpx.Client() as client:
             for _ in range(5):
-                console.log(f"[ASAAS] GET pixQrCode for payment {asaas_id}", flush=True)
+                print(f"[ASAAS] GET pixQrCode for payment {asaas_id}", flush=True)
                 pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
                 print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
                 if pix_res.status_code == 200:
@@ -232,11 +238,11 @@ def create_checkout(payment: AsaasPayment, request: Request):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
-        # Buscar endereço do usuário no banco se não enviado
         postal_code = payment.postal_code
         address_number = payment.address_number
         address_complement = payment.address_complement
         headers = get_headers()
+
         if not postal_code or not address_number:
             cursor.execute("SELECT cep, number, complement FROM user_addresses WHERE id_user=%s AND is_primary=1", (payment.id_user,))
             addr = cursor.fetchone()
@@ -245,7 +251,6 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 address_number = address_number or addr["number"]
                 address_complement = address_complement or addr["complement"]
 
-        # Criar ou buscar customer no Asaas
         customer_id = get_or_create_customer(AsaasCustomer(
             name=payment.customer_name,
             email=payment.customer_email,
@@ -271,9 +276,8 @@ def create_checkout(payment: AsaasPayment, request: Request):
 
         if payment.billing_type == "CREDIT_CARD":
             if not payment.card_number or not payment.card_name or not payment.card_expiry or not payment.card_cvv:
-                raise HTTPException(400, "Dados do cartão incompletos")
+                raise HTTPException(400, "Dados do cartao incompletos")
 
-            # Parsear card_expiry MM/YY ou MM/YYYY
             expiry_parts = payment.card_expiry.replace("-", "/").split("/")
             expiry_month = expiry_parts[0].strip()
             expiry_year = expiry_parts[1].strip()
@@ -284,7 +288,6 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 payload["installmentCount"] = payment.installments
                 payload["installmentValue"] = round(float(payment.amount) / payment.installments, 2)
 
-            # Buscar telefone do usuário no banco se não enviado
             mobile_phone = payment.customer_phone
             if not mobile_phone:
                 cursor.execute("SELECT phone FROM users WHERE id_user=%s", (payment.id_user,))
@@ -292,7 +295,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 if user_row:
                     mobile_phone = user_row["phone"]
             if not mobile_phone:
-                raise HTTPException(400, "Telefone do titular do cartão é obrigatório")
+                raise HTTPException(400, "Telefone do titular do cartao e obrigatorio")
 
             payload["creditCard"] = {
                 "holderName": payment.card_name,
@@ -311,7 +314,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 "mobilePhone": mobile_phone,
             }
 
-        print(f"[ASAAS] POST /payments headers={headers} body={payload}", flush=True)
+        print(f"[ASAAS] POST /payments body={payload}", flush=True)
         with httpx.Client() as client:
             res = client.post(f"{ASAAS_BASE_URL}/payments", headers=headers, json=payload)
             print(f"[ASAAS] POST /payments status={res.status_code} body={res.text}", flush=True)
@@ -358,7 +361,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
             "status": status,
             "billing_type": payment.billing_type,
             "pix_code": pix_code,
-            "pix_qr_code": pix_qr_code,
+            "pix_qr_image": pix_qr_code,
             "boleto_url": boleto_url,
             "invoice_url": invoice_url,
         }
@@ -434,7 +437,7 @@ async def asaas_webhook(request: Request):
             )
             order_row = cursor.fetchone()
             if order_row:
-                cursor.execute("UPDATE users SET active=1 WHERE id_user=%s", (order_row["id_user"],))
+                cursor.execute("UPDATE users SET active=1 WHERE id_user=%s", (order_row[0],))
         elif new_status == "rejected":
             cursor.execute("UPDATE payments SET payment_status='rejected' WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='rejected' WHERE id_order=%s", (order_id,))
@@ -448,18 +451,17 @@ async def asaas_webhook(request: Request):
 
         conn.commit()
 
-        # Acionar onboarding após commit (fora da transação)
         if new_status == "approved" and order_row:
             try:
                 with httpx.Client(timeout=10) as client:
                     client.post(ONBOARDING_URL, json={
                         "id_order": order_id,
-                        "id_user": order_row["id_user"],
-                        "plan_name": order_row["plan_name"],
-                        "plan_frequency": order_row["plan_frequency"],
+                        "id_user": order_row[0],
+                        "plan_name": order_row[1],
+                        "plan_frequency": order_row[2],
                     })
             except Exception:
-                pass  # Onboarding falhou silenciosamente; pode ser reprocessado
+                pass
 
         return {"success": True, "event": event, "status": new_status}
     except Exception as e:

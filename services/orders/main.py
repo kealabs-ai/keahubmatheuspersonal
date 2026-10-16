@@ -45,6 +45,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 class OrderItem(BaseModel):
     plan_name: str
     plan_price: Decimal
+    plan_price_with_discount: Optional[Decimal] = None
     plan_frequency: str
     quantity: int = 1
 
@@ -53,6 +54,11 @@ class Order(BaseModel):
     items: List[OrderItem]
     payment_method: str
     id_coupon: Optional[int] = None
+    coupon_code: Optional[str] = None
+    discount_type: Optional[str] = None
+    discount_value: Optional[Decimal] = Decimal(0)
+    original_price: Optional[Decimal] = None
+    final_price: Optional[Decimal] = None
 
 @app.post("/orders")
 def create_order(order: Order):
@@ -71,7 +77,12 @@ def create_order(order: Order):
                 else:
                     discount = coupon[4]
         
-        total = subtotal - discount
+        # Usa final_price do frontend se disponível (já inclui desconto calculado)
+        if order.final_price is not None:
+            total = order.final_price
+            discount = subtotal - total
+        else:
+            total = subtotal - discount
         order_number = str(uuid.uuid4())[:8].upper()
         
         cursor.execute("""INSERT INTO orders (order_number, id_user, subtotal, discount_amount, 
