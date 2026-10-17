@@ -8,6 +8,8 @@ import httpx
 import datetime
 import time
 import sys
+import hmac
+from decimal import ROUND_HALF_UP
 
 ONBOARDING_URL = os.getenv("ONBOARDING_URL", "http://ms-onboarding-service:8000/onboarding/activate")
 sys.path.append('..')
@@ -23,6 +25,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {str(exc)}"})
 
 ASAAS_BASE_URL = os.getenv("ASAAS_BASE_URL", "https://api-sandbox.asaas.com/v3")
+ASAAS_WEBHOOK_TOKEN = os.getenv("ASAAS_WEBHOOK_TOKEN", "")
 
 STATUS_MAP = {
     "CONFIRMED": "approved",
@@ -50,6 +53,24 @@ def get_headers():
         "content-type": "application/json",
         "access_token": api_key,
     }
+
+def validate_order(cursor, order_id: int, user_id: int, amount: Decimal):
+    cursor.execute(
+        "SELECT id_user, total_amount, payment_status FROM orders WHERE id_order=%s",
+        (order_id,)
+    )
+    order = cursor.fetchone()
+    if not order:
+        raise HTTPException(404, "Pedido nao encontrado")
+    if order["id_user"] != user_id:
+        raise HTTPException(403, "Pedido nao pertence ao usuario informado")
+    if order["payment_status"] == "approved":
+        raise HTTPException(409, "Pedido ja foi pago")
+    expected = Decimal(str(order["total_amount"])).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    received = Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if received != expected or received <= 0:
+        raise HTTPException(400, "Valor do pagamento diferente do total do pedido")
+    return expected
 
 @app.get("/asaas/health")
 def health():
@@ -136,7 +157,7 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
     with httpx.Client() as client:
         print(f"[ASAAS] GET /customers cpfCnpj={customer.cpf_cnpj}", flush=True)
         res = client.get(f"{ASAAS_BASE_URL}/customers", headers=headers, params={"cpfCnpj": customer.cpf_cnpj})
-        print(f"[ASAAS] GET /customers status={res.status_code} body={res.text}", flush=True)
+        print(f"[ASAAS] GET /customers status={res.status_code}", flush=True)
         if res.status_code == 200:
             data = res.json()
             if data.get("data"):
@@ -146,9 +167,9 @@ def get_or_create_customer(customer: AsaasCustomer) -> str:
         payload = {"name": customer.name, "email": customer.email, "cpfCnpj": customer.cpf_cnpj}
         if customer.phone:
             payload["mobilePhone"] = customer.phone
-        print(f"[ASAAS] POST /customers body={payload}", flush=True)
+        print("[ASAAS] POST /customers", flush=True)
         res = client.post(f"{ASAAS_BASE_URL}/customers", headers=headers, json=payload)
-        print(f"[ASAAS] POST /customers status={res.status_code} body={res.text}", flush=True)
+        print(f"[ASAAS] POST /customers status={res.status_code}", flush=True)
         if res.status_code not in (200, 201):
             raise HTTPException(400, f"Asaas customers POST error {res.status_code}: {res.text}")
         return res.json()["id"]
@@ -158,6 +179,11 @@ def create_cart_checkout(data: AsaasCartCheckout, request: Request):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
+        try:
+            order_id = int(data.id_order)
+        except (TypeError, ValueError):
+            raise HTTPException(400, "id_order invalido")
+        amount = validate_order(cursor, order_id, data.id_user, data.amount)
         headers = get_headers()
 
         customer_id = get_or_create_customer(AsaasCustomer(
@@ -175,19 +201,19 @@ def create_cart_checkout(data: AsaasCartCheckout, request: Request):
         payload = {
             "customer": customer_id,
             "billingType": "PIX",
-            "value": float(data.amount),
+            "value": float(amount),
             "dueDate": due_date,
             "description": data.description or f"Pedido #{data.id_order}",
-            "externalReference": data.id_order,
+            "externalReference": str(order_id),
             "remoteIp": remote_ip,
         }
 
         print(f"[ASAAS] POST /payments body={payload}", flush=True)
         with httpx.Client() as client:
             res = client.post(f"{ASAAS_BASE_URL}/payments", headers=headers, json=payload)
-            print(f"[ASAAS] POST /payments status={res.status_code} body={res.text}", flush=True)
+            print(f"[ASAAS] POST /payments status={res.status_code}", flush=True)
             if res.status_code not in (200, 201):
-                raise HTTPException(400, f"Asaas payments error {res.status_code}: {res.text}")
+                raise HTTPException(400, f"Asaas payments error {res.status_code}")
             asaas_data = res.json()
 
         asaas_id = asaas_data["id"]
@@ -199,7 +225,7 @@ def create_cart_checkout(data: AsaasCartCheckout, request: Request):
             for _ in range(5):
                 print(f"[ASAAS] GET pixQrCode for payment {asaas_id}", flush=True)
                 pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
-                print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
+                print(f"[ASAAS] GET pixQrCode status={pix_res.status_code}", flush=True)
                 if pix_res.status_code == 200:
                     pix_data = pix_res.json()
                     pix_code = pix_data.get("payload")
@@ -210,9 +236,11 @@ def create_cart_checkout(data: AsaasCartCheckout, request: Request):
 
         cursor.execute(
             """INSERT INTO payments (id_order, payment_method, amount, installments, payment_status, transaction_id)
-               VALUES (%s, 'pix', %s, 1, 'pending', %s)""",
-            (data.id_order, data.amount, asaas_id)
+               VALUES (%s, 'pix', %s, 1, %s, %s)""",
+            (order_id, amount, status, asaas_id)
         )
+        if status == "approved":
+            cursor.execute("UPDATE orders SET payment_status='approved' WHERE id_order=%s", (order_id,))
         conn.commit()
         payment_id = cursor.lastrowid
 
@@ -238,6 +266,10 @@ def create_checkout(payment: AsaasPayment, request: Request):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
+        amount = validate_order(cursor, payment.id_order, payment.id_user, payment.amount)
+        billing_type = payment.billing_type.strip().upper()
+        if billing_type not in ("PIX", "CREDIT_CARD"):
+            raise HTTPException(400, "Forma de pagamento Asaas nao suportada")
         postal_code = payment.postal_code
         address_number = payment.address_number
         address_complement = payment.address_complement
@@ -266,15 +298,15 @@ def create_checkout(payment: AsaasPayment, request: Request):
 
         payload = {
             "customer": customer_id,
-            "billingType": payment.billing_type,
-            "value": float(payment.amount),
+            "billingType": billing_type,
+            "value": float(amount),
             "dueDate": due_date,
             "description": payment.description or f"Pedido #{payment.id_order}",
-            "externalReference": payment.external_reference or str(payment.id_order),
+            "externalReference": str(payment.id_order),
             "remoteIp": remote_ip,
         }
 
-        if payment.billing_type == "CREDIT_CARD":
+        if billing_type == "CREDIT_CARD":
             if not payment.card_number or not payment.card_name or not payment.card_expiry or not payment.card_cvv:
                 raise HTTPException(400, "Dados do cartao incompletos")
 
@@ -316,12 +348,13 @@ def create_checkout(payment: AsaasPayment, request: Request):
                 holder_info["addressComplement"] = address_complement
             payload["creditCardHolderInfo"] = holder_info
 
-        print(f"[ASAAS] POST /payments body={payload}", flush=True)
+        safe_payload = {key: value for key, value in payload.items() if key not in ("creditCard", "creditCardHolderInfo")}
+        print(f"[ASAAS] POST /payments body={safe_payload}", flush=True)
         with httpx.Client() as client:
             res = client.post(f"{ASAAS_BASE_URL}/payments", headers=headers, json=payload)
-            print(f"[ASAAS] POST /payments status={res.status_code} body={res.text}", flush=True)
+            print(f"[ASAAS] POST /payments status={res.status_code}", flush=True)
             if res.status_code not in (200, 201):
-                raise HTTPException(400, f"Asaas payments error {res.status_code}: {res.text}")
+                raise HTTPException(400, f"Asaas payments error {res.status_code}")
             asaas_data = res.json()
 
         asaas_id = asaas_data["id"]
@@ -331,11 +364,11 @@ def create_checkout(payment: AsaasPayment, request: Request):
         pix_code = None
         pix_qr_code = None
 
-        if payment.billing_type == "PIX":
+        if billing_type == "PIX":
             with httpx.Client() as client:
                 for _ in range(5):
                     pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
-                    print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
+                    print(f"[ASAAS] GET pixQrCode status={pix_res.status_code}", flush=True)
                     if pix_res.status_code == 200:
                         pix_data = pix_res.json()
                         pix_code = pix_data.get("payload")
@@ -347,7 +380,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
         cursor.execute("""INSERT INTO payments (id_order, payment_method, amount, installments,
                          payment_status, transaction_id)
                          VALUES (%s,%s,%s,%s,%s,%s)""",
-                      (payment.id_order, payment.billing_type.lower(), payment.amount,
+                      (payment.id_order, "credit" if billing_type == "CREDIT_CARD" else "pix", amount,
                        payment.installments, status, asaas_id))
         payment_id = cursor.lastrowid
 
@@ -380,7 +413,7 @@ def create_checkout(payment: AsaasPayment, request: Request):
             "payment_id": payment_id,
             "asaas_id": asaas_id,
             "status": status,
-            "billing_type": payment.billing_type,
+            "billing_type": billing_type,
             "pix_code": pix_code,
             "pix_qr_image": pix_qr_code,
             "boleto_url": boleto_url,
@@ -409,7 +442,7 @@ def get_payment_status(asaas_id: str):
         with httpx.Client() as client:
             for _ in range(5):
                 pix_res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}/pixQrCode", headers=headers)
-                print(f"[ASAAS] GET pixQrCode status={pix_res.status_code} body={pix_res.text}", flush=True)
+                print(f"[ASAAS] GET pixQrCode status={pix_res.status_code}", flush=True)
                 if pix_res.status_code == 200:
                     pix_data = pix_res.json()
                     pix_code = pix_data.get("payload")
@@ -431,21 +464,53 @@ def get_payment_status(asaas_id: str):
 
 @app.post("/asaas/webhook")
 async def asaas_webhook(request: Request):
+    if not ASAAS_WEBHOOK_TOKEN:
+        raise HTTPException(503, "ASAAS_WEBHOOK_TOKEN nao configurado")
+    received_token = request.headers.get("asaas-access-token", "")
+    if not hmac.compare_digest(received_token, ASAAS_WEBHOOK_TOKEN):
+        raise HTTPException(401, "Webhook Asaas nao autenticado")
+
     conn = get_db()
     cursor = conn.cursor()
     try:
         payload = await request.json()
         event = payload.get("event", "")
-        asaas_id = payload.get("payment", {}).get("id")
-        raw_status = payload.get("payment", {}).get("status", "PENDING")
+        webhook_payment = payload.get("payment") or {}
+        asaas_id = webhook_payment.get("id")
+        if not asaas_id:
+            raise HTTPException(400, "Evento Asaas sem identificador do pagamento")
+
+        # Consult the authenticated Asaas API so the event body alone cannot approve a charge.
+        headers = get_headers()
+        with httpx.Client(timeout=10) as client:
+            res = client.get(f"{ASAAS_BASE_URL}/payments/{asaas_id}", headers=headers)
+            if res.status_code != 200:
+                raise HTTPException(503, f"Falha ao validar pagamento no Asaas: {res.status_code}")
+            provider_payment = res.json()
+        if provider_payment.get("id") != asaas_id:
+            raise HTTPException(400, "Identificador do pagamento Asaas divergente")
+
+        raw_status = str(provider_payment.get("status", "PENDING")).upper()
         new_status = STATUS_MAP.get(raw_status, "pending")
 
-        cursor.execute("SELECT id_payment, id_order FROM payments WHERE transaction_id=%s", (asaas_id,))
+        cursor.execute("SELECT id_payment, id_order, amount, payment_status FROM payments WHERE transaction_id=%s FOR UPDATE", (asaas_id,))
         row = cursor.fetchone()
         if not row:
-            return {"success": False, "message": "Payment not found"}
+            raise HTTPException(404, "Pagamento local nao encontrado")
 
-        payment_id, order_id = row
+        payment_id, order_id, local_amount, previous_status = row
+        provider_amount = Decimal(str(provider_payment.get("value", "0"))).quantize(Decimal("0.01"))
+        local_amount = Decimal(str(local_amount)).quantize(Decimal("0.01"))
+        if provider_amount != local_amount:
+            raise HTTPException(400, "Valor do pagamento Asaas diverge do registro local")
+        external_reference = provider_payment.get("externalReference")
+        if external_reference and str(external_reference) != str(order_id):
+            raise HTTPException(400, "Pedido associado ao pagamento Asaas diverge do registro local")
+
+        # Do not regress an approved payment when a duplicate or delayed event arrives.
+        if previous_status == "approved" and new_status != "refunded":
+            conn.commit()
+            return {"success": True, "event": event, "status": "approved", "duplicate": True}
 
         if new_status == "approved":
             cursor.execute("UPDATE payments SET payment_status='approved', paid_at=NOW() WHERE id_payment=%s", (payment_id,))
@@ -486,8 +551,13 @@ async def asaas_webhook(request: Request):
                 pass
 
         return {"success": True, "event": event, "status": new_status}
+    except HTTPException:
+        conn.rollback()
+        raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        conn.rollback()
+        print(f"[ASAAS] Webhook processing failed: {type(e).__name__}: {e}", flush=True)
+        raise HTTPException(503, "Falha ao processar webhook Asaas")
     finally:
         cursor.close()
         conn.close()

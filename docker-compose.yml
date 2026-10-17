@@ -198,6 +198,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ASAAS_API_KEY: ${ASAAS_API_KEY}
       ASAAS_BASE_URL: ${ASAAS_BASE_URL}
+      ASAAS_WEBHOOK_TOKEN: ${ASAAS_WEBHOOK_TOKEN}
       ONBOARDING_URL: "http://ms-onboarding-service:8000/onboarding/activate"
     labels:
       - "traefik.enable=true"
