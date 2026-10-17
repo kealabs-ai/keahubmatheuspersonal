@@ -353,9 +353,28 @@ def create_checkout(payment: AsaasPayment, request: Request):
 
         if status == "approved":
             cursor.execute("UPDATE orders SET payment_status='approved' WHERE id_order=%s", (payment.id_order,))
-            cursor.execute("UPDATE users SET active=1 WHERE id_user=%s", (payment.id_user,))
-
-        conn.commit()
+            conn.commit()
+            # Aciona onboarding para atualizar plan_start, plan_renewal e ativar usuario
+            cursor_d = conn.cursor(dictionary=True)
+            cursor_d.execute(
+                "SELECT plan_name, plan_frequency FROM order_items WHERE id_order=%s LIMIT 1",
+                (payment.id_order,)
+            )
+            item = cursor_d.fetchone()
+            cursor_d.close()
+            if item:
+                try:
+                    with httpx.Client(timeout=10) as client:
+                        client.post(ONBOARDING_URL, json={
+                            "id_order": payment.id_order,
+                            "id_user": payment.id_user,
+                            "plan_name": item["plan_name"],
+                            "plan_frequency": item["plan_frequency"],
+                        })
+                except Exception:
+                    pass
+        else:
+            conn.commit()
 
         return {
             "payment_id": payment_id,
@@ -431,15 +450,16 @@ async def asaas_webhook(request: Request):
         if new_status == "approved":
             cursor.execute("UPDATE payments SET payment_status='approved', paid_at=NOW() WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='approved' WHERE id_order=%s", (order_id,))
-            cursor.execute(
+            # Busca dados do pedido para acionar onboarding
+            cursor_d = conn.cursor(dictionary=True)
+            cursor_d.execute(
                 """SELECT o.id_user, oi.plan_name, oi.plan_frequency
                    FROM orders o JOIN order_items oi ON oi.id_order = o.id_order
                    WHERE o.id_order=%s LIMIT 1""",
                 (order_id,)
             )
-            order_row = cursor.fetchone()
-            if order_row:
-                cursor.execute("UPDATE users SET active=1 WHERE id_user=%s", (order_row[0],))
+            order_row = cursor_d.fetchone()
+            cursor_d.close()
         elif new_status == "rejected":
             cursor.execute("UPDATE payments SET payment_status='rejected' WHERE id_payment=%s", (payment_id,))
             cursor.execute("UPDATE orders SET payment_status='rejected' WHERE id_order=%s", (order_id,))
@@ -458,9 +478,9 @@ async def asaas_webhook(request: Request):
                 with httpx.Client(timeout=10) as client:
                     client.post(ONBOARDING_URL, json={
                         "id_order": order_id,
-                        "id_user": order_row[0],
-                        "plan_name": order_row[1],
-                        "plan_frequency": order_row[2],
+                        "id_user": order_row["id_user"],
+                        "plan_name": order_row["plan_name"],
+                        "plan_frequency": order_row["plan_frequency"],
                     })
             except Exception:
                 pass
